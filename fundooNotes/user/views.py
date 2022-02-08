@@ -1,8 +1,9 @@
 import json
 import logging
+from django.contrib.auth.models import auth, User
+from django.http import JsonResponse
 
-from django.http import HttpResponse, JsonResponse
-from user.models import User
+# from user.models import User
 
 # Create your views here.
 
@@ -15,7 +16,7 @@ def login(request):
     user_dict = json.loads(request.body)
     user_name = user_dict.get("username")
     try:
-        if User.objects.filter(username=user_name, password=user_dict.get("password")):
+        if auth.authenticate(username=user_name, password=user_dict.get("password")):
             return JsonResponse({"message": "user login successfully", "data": {"username": user_name}})
         else:
             return JsonResponse({"message": "user login unsuccessful", "data": {"username": user_name}})
@@ -29,11 +30,10 @@ def user_register(request):
         if request.method == "POST":
             user_dict = json.loads(request.body)
             username = user_dict.get('username')
-            if not User.objects.filter(username=username):
-                user = User(username=username, firstname=user_dict.get('firstname'),
-                            lastname=user_dict.get('lastname'), password=user_dict.get('password'),
-                            age=int(user_dict.get('age')),
-                            email=user_dict.get('email'), phone=user_dict.get('phone'))
+            if not User.objects.filter(username=username).exists():
+                user = User(username=username, first_name=user_dict.get('firstname'),
+                            last_name=user_dict.get('lastname'), password=user_dict.get('password'),
+                            email=user_dict.get('email'))
                 logging.info(f"user: {user}")
                 user.save()
                 return JsonResponse({"message": "user registered successfully", "data": {"username": username}})
@@ -41,7 +41,6 @@ def user_register(request):
                 return JsonResponse({"message": "user register unsuccessful"})
     except Exception as e:
         logging.error(e)
-
 
 
 def users(request):
