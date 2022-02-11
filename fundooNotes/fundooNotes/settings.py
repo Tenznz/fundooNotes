@@ -35,10 +35,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
     'user'
 ]
 
-AUTH_USER_MODEL = "user.UserProfile"
+AUTH_USER_MODEL = "user.User"
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -76,7 +77,7 @@ WSGI_APPLICATION = 'fundooNotes.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'testdatabase',
+        'NAME': 'mydatabase',
         'USER': 'postgres',
         'PASSWORD': '1234',
         'HOST': 'localhost',

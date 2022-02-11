@@ -1,61 +1,61 @@
 import json
 import logging
+
 from django.contrib.auth.models import auth
 from django.http import JsonResponse
-
-from user.models import UserProfile
+from rest_framework.response import Response
+from user.models import User
+from user.serializers import UserSerializer
 from rest_framework.views import APIView
-
-# Create your views here.
-
+from rest_framework.parsers import JSONParser
 
 logging.basicConfig(filename="views.log", filemode="w")
 
 
 class UserRegistration(APIView):
     def post(self, request):
+        data = JSONParser().parse(request)
+        serializer = UserSerializer(data=data)
         try:
-            if request.method == "POST":
-                user_dict = json.loads(request.body)
-                username = user_dict.get('username')
-                if not UserProfile.objects.filter(username=username).exists():
-                    user = UserProfile.objects.create_user(username=username, first_name=user_dict.get('first_name'),
-                                                           last_name=user_dict.get('last_name'),
-                                                           password=user_dict.get('password'),
-                                                           age=int(user_dict.get('age')),
-                                                           email=user_dict.get('email'), phone=user_dict.get('phone'))
-                    logging.info(f"user: {user}")
-                    # user.set_password(user_dict.get('password'))
-                    user.save()
-                    return JsonResponse({"message": "user registered successfully", "data": {"username": username}})
-                else:
-                    return JsonResponse({"message": "user register unsuccessful"})
+            if serializer.is_valid(raise_exception=True):
+                user = User.objects.create_user(username=serializer.data['username'],
+                                                first_name=serializer.data['first_name'],
+                                                last_name=serializer.data['last_name'],
+                                                password=serializer.data['password'],
+                                                age=serializer.data['age'],
+                                                email=serializer.data['email'],
+                                                phone=serializer.data['phone'])
+
+                user.save()
+                return Response({"message": "user login successfully",
+                                 "data": {"username": serializer.data}})
+
         except Exception as e:
             logging.error(e)
-            return JsonResponse({"message": "user register unsuccessful"})
+            return JsonResponse(serializer.errors)
 
 
 class UserLogin(APIView):
 
     def post(self, request):
-
-        user_dict = json.loads(request.body)
-        print(user_dict)
-        username = user_dict.get("username")
-        print(username)
         try:
-            # if auth.authenticate(username=username, password=user_dict.get("password")):
-            user = auth.authenticate(username=username, password=user_dict.get("password"))
+            username = request.data.get("username")
+            password = request.data.get("password")
+            user = auth.authenticate(username=username, password=password)
             print(user)
             if user is not None:
-                print("Reached inside if")
-                return JsonResponse({"message": "user login successfully", "data": {"username": username}})
+                serializer = UserSerializer(user)
+                return Response({"message": "login successfully", "data": serializer.data["username"]})
+                # return JsonResponse({"message": "user login successful", "data": username})
             else:
-                return JsonResponse({"message": "user login unsuccessful", "data": {"username": username}})
+                return JsonResponse({"message": "user login unsuccessful"})
         except Exception as e:
             logging.error(e)
             return JsonResponse({"message": "login unsuccessful"})
 
-# def users(request):
-#     data = list(UserProfile.objects.values())
-#     return JsonResponse(data, safe=False)
+
+def user_list(request):
+    if request.method == 'GET':
+        user = User.objects.all()
+        serializer = UserSerializer(user, many=True)
+        return JsonResponse(serializer.data, safe=False)
