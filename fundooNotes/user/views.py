@@ -34,6 +34,11 @@ class UserRegistration(APIView):
             logging.error(e)
             return JsonResponse(serializer.errors)
 
+    def get(self, request):
+        user = User.objects.all()
+        serializer = UserSerializer(user, many=True)
+        return JsonResponse(serializer.data, safe=False)
+
 
 class UserLogin(APIView):
 
@@ -46,16 +51,9 @@ class UserLogin(APIView):
             if user is not None:
                 serializer = UserSerializer(user)
                 return Response({"message": "login successfully", "data": serializer.data["username"]})
-                # return JsonResponse({"message": "user login successful", "data": username})
+                # return Response({"message": "user login successful", "data": username})
             else:
                 return JsonResponse({"message": "user login unsuccessful"})
         except Exception as e:
             logging.error(e)
             return JsonResponse({"message": "login unsuccessful"})
-
-
-def user_list(request):
-    if request.method == 'GET':
-        user = User.objects.all()
-        serializer = UserSerializer(user, many=True)
-        return JsonResponse(serializer.data, safe=False)
