@@ -2,11 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="4dfc17ea-6bbd-4cc1-ba2a-37cd7402e745" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/fundooNotes/user/serializers.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/fundooNotes/fundooNotes/settings.py" beforeDir="false" afterPath="$PROJECT_DIR$/fundooNotes/fundooNotes/settings.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/fundooNotes/user/migrations/0001_initial.py" beforeDir="false" afterPath="$PROJECT_DIR$/fundooNotes/user/migrations/0001_initial.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/fundooNotes/user/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/fundooNotes/user/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/fundooNotes/user/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/fundooNotes/user/urls.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/fundooNotes/notes/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/fundooNotes/notes/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/fundooNotes/notes/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/fundooNotes/notes/views.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/fundooNotes/user/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/fundooNotes/user/views.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
