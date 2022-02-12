@@ -27,7 +27,7 @@ class UserRegistration(APIView):
                                                 phone=serializer.data['phone'])
 
                 user.save()
-                return Response({"message": "user login successfully",
+                return Response({"message": "data store successfully",
                                  "data": {"username": serializer.data}})
 
         except Exception as e:
