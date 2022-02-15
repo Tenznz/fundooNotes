@@ -10,7 +10,7 @@ class UserSerializer(serializers.Serializer):
     age = serializers.IntegerField()
     email = serializers.EmailField(max_length=40)
     phone = serializers.CharField(max_length=10)
-    # is_verified = serializers.BooleanField(default=False)
+    is_verified = serializers.BooleanField(default=False)
 
     def create(self, validated_data):
         """
@@ -29,7 +29,7 @@ class UserSerializer(serializers.Serializer):
         instance.email = validated_data.get('email', instance.email)
         instance.age = validated_data.get('age', instance.age)
         instance.phone = validated_data.get('phone', instance.phone)
-        # instance.is_verified = validated_data.get('is_verified', instance.is_verified)
+        instance.is_verified = validated_data.get('is_verified', instance.is_verified)
 
         instance.save()
         return instance

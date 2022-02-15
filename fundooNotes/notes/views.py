@@ -13,8 +13,7 @@ logging.basicConfig(filename="views.log", filemode="w")
 # Create your views here.
 class Notes(APIView):
     def post(self, request):
-        data = JSONParser().parse(request)
-        serializer = NoteSerializer(data=data)
+        serializer = NoteSerializer(data=request.data)
         try:
 
             serializer.is_valid(raise_exception=True)

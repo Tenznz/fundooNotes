@@ -14,8 +14,8 @@ logging.basicConfig(filename="views.log", filemode="w")
 
 class UserRegistration(APIView):
     def post(self, request):
-        data = JSONParser().parse(request)
-        serializer = UserSerializer(data=data)
+        # data = JSONParser().parse(request)
+        serializer = UserSerializer(data=request.data)
         try:
             if serializer.is_valid(raise_exception=True):
                 user = User.objects.create_user(username=serializer.data['username'],
