@@ -6,17 +6,19 @@ from .models import Note
 from .serializers import NoteSerializer
 from django.http import JsonResponse
 from rest_framework.parsers import JSONParser
+from django.core.mail import send_mail
+from .utils import verify_token
+
 
 logging.basicConfig(filename="views.log", filemode="w")
 
 
 # Create your views here.
 class Notes(APIView):
+    @verify_token
     def post(self, request):
-        data = JSONParser().parse(request)
-        serializer = NoteSerializer(data=data)
+        serializer = NoteSerializer(data=request.data)
         try:
-
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(
@@ -28,6 +30,7 @@ class Notes(APIView):
             logging.error(e)
             return Response(serializer.errors)
 
+    @verify_token
     def get(self, request):
         user_id = request.data.get("user_id")
         note = Note.objects.filter(user_id_id=user_id)
@@ -39,6 +42,7 @@ class Notes(APIView):
             "data": serializer.data
         })
 
+    @verify_token
     def delete(self, request):
         try:
             note_id = request.data.get("id")
@@ -54,6 +58,7 @@ class Notes(APIView):
                 "message": "user not found"
             })
 
+    @verify_token
     def put(self, request):
         note = Note.objects.get(pk=request.data["id"])
         print(note)
