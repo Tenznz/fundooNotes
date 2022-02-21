@@ -63,8 +63,8 @@ class RedisOperation:
             print("dict_dat", dict_data)
             print(existing_note)
             if existing_note is None:
-                print(json.dumps(note))
-                new_note = {int(note.get('id')): json.dumps(note)}
+                # print(json.loads(note))
+                new_note = {int(note.get('id')): note}
 
                 dict_data[user_id] = new_note
                 self.redis_obj.set(user_id, json.dumps(dict_data[user_id]))
@@ -97,4 +97,18 @@ class RedisOperation:
             raise e
 
     def update_note(self, note):
-        pass
+        try:
+            user_id = note.get('user_id')
+            id = str(note.get("id"))
+            print(user_id)
+            note_dict = json.loads(self.redis_obj.get(user_id))
+            # print(note_dict.get(id))
+
+            if note_dict.get(id):
+                note_dict.update({id: note})
+                self.redis_obj.set(user_id, json.dumps(note_dict))
+            else:
+                print("id not found")
+
+        except Exception as e:
+            logging.error(e)

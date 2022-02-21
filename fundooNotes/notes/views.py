@@ -78,12 +78,13 @@ class Notes(APIView):
 
     @verify_token
     def put(self, request):
-        note = Note.objects.get(pk=request.data["id"])
+        note = Note.objects.get(pk=request.data["node_id"])
         print(note)
         serializer = NoteSerializer(note, data=request.data)
         try:
             serializer.is_valid(raise_exception=True)
             serializer.save()
+            RedisOperation().update_note(serializer.data)
             return Response({
                 "message": "user update successfully",
                 "data": serializer.data
@@ -91,4 +92,8 @@ class Notes(APIView):
         except Exception as e:
             logging.error(e)
             print(e)
-            Response(serializer.errors)
+            return Response(
+                {
+                    "message": "Data not updated"
+                },
+                status=status.HTTP_400_BAD_REQUEST)
