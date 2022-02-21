@@ -20,6 +20,7 @@ def verify_token(function):
         encode = token.split(" ")
         # print(encode[1])
         id = EncodeDecodeToken.decode_token(encode[1])
+        print(id)
         request.data.update({'id': id.get("id")})
         return function(self, request)
 
@@ -42,20 +43,22 @@ class RedisOperation:
             data = self.redis_obj.get(user_id)
             if data is None:
                 return None
+            # print(type(json.loads(data)))
             return json.loads(data)
         except Exception as e:
+            logging.error(e)
             raise e
 
-    def add_note(self, note):
+    def add_note(self, user_id, note):
         """
         Adding note to cache
+        :param user_id: user_id
         :param note: note details
         :return:
         """
         try:
             print("data added to redis server")
             # print(type(note))
-            user_id = note.get("user_id")
             # print(user_id)
             existing_note = self.get_note(user_id)
             print("existing", existing_note)
@@ -69,10 +72,9 @@ class RedisOperation:
                 dict_data[user_id] = new_note
                 self.redis_obj.set(user_id, json.dumps(dict_data[user_id]))
             else:
-                new_note = {int(note.get('id')): json.dumps(note)}
+                new_note = {int(note.get('id')): note}
                 added_note = {**existing_note, **new_note}
                 self.redis_obj.set(user_id, json.dumps(added_note))
-        except Exception as e:
             logging.error(e)
         except Exception as e:
             logging.error(e)

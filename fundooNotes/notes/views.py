@@ -1,5 +1,6 @@
 import logging
 import json
+
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -12,16 +13,17 @@ from .utils import verify_token, RedisOperation
 logging.basicConfig(filename="views.log", filemode="w")
 
 
-# Create your views here.
 class Notes(APIView):
     @verify_token
     def post(self, request):
-        serializer = NoteSerializer(data=request.data)
-
+        data = request.data
+        data["user_id"] = request.data.get("id")
+        # print(data)
+        serializer = NoteSerializer(data=data)
         try:
             serializer.is_valid(raise_exception=True)
             serializer.save()
-            RedisOperation().add_note(note=serializer.data)
+            RedisOperation().add_note(request.data.get("id"), note=serializer.data)
             return Response(
                 {
                     "message": "Data store successfully",
@@ -33,9 +35,9 @@ class Notes(APIView):
 
     @verify_token
     def get(self, request):
-        user_id = request.data.get("user_id")
+        user_id = request.data.get("id")
         try:
-            data = RedisOperation().get_note(user_id=user_id)
+            data = RedisOperation().get_note(user_id=user_id).values()
             if data is not None:
                 return Response({
                     "message": "user found",
@@ -60,7 +62,7 @@ class Notes(APIView):
         try:
             note = Note.objects.get(pk=request.data["note_id"])
             print(note)
-            RedisOperation().delete_note(request.data.get("user_id"), request.data.get("note_id"))
+            RedisOperation().delete_note(request.data.get("id"), request.data.get("note_id"))
             note.delete()
             return Response({
                 "message": "user delete successfully"
@@ -78,9 +80,11 @@ class Notes(APIView):
 
     @verify_token
     def put(self, request):
+        data = request.data
+        data["user_id"] = request.data.get("id")
         note = Note.objects.get(pk=request.data["node_id"])
         print(note)
-        serializer = NoteSerializer(note, data=request.data)
+        serializer = NoteSerializer(note, data=data)
         try:
             serializer.is_valid(raise_exception=True)
             serializer.save()
