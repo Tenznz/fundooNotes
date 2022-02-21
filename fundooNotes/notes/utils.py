@@ -97,6 +97,11 @@ class RedisOperation:
             raise e
 
     def update_note(self, note):
+        """
+        deleting note to cache
+        :param note:note details
+        :return:
+        """
         try:
             user_id = note.get('user_id')
             id = str(note.get("id"))
