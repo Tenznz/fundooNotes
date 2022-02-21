@@ -58,7 +58,7 @@ class UserLogin(APIView):
             user = auth.authenticate(username=username, password=password)
             print(user)
             if user is not None:
-                serializer = UserSerializer(user)
+                UserSerializer(user)
                 token = EncodeDecodeToken.encode_token(payload=user.pk)
 
                 return Response({"message": "login successfully", "data": token})
@@ -78,8 +78,8 @@ class ValidateToken(APIView):
             print(decoded_token)
             user = User.objects.get(id=decoded_token.get('id'))
             user.is_verified = True
-            user.save()
-            return Response({"message": "Validation Successfully", "data": user.pk},
+            serializer = UserSerializer(user)
+            return Response({"message": "Validation Successfully", "data": serializer.data},
                             status=status.HTTP_201_CREATED)
         except Exception as e:
             logging.error(e)
