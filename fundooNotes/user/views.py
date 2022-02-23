@@ -34,8 +34,9 @@ class UserRegistration(APIView):
 
             token = EncodeDecodeToken.encode_token(payload=user.pk)
             print(token)
-            # send_mail_task.delay(email=serializer.data["email"], token=token)
-            # Email().send_email(token, serializer.data["email"])
+            send_email_task.delay(email=serializer.data["email"], token=str(token))
+            # sendemailtask.delay()
+            # # Email().send_email(token, serializer.data["email"])
             return Response({"message": "data store successfully",
                              "data": {"username": serializer.data}})
 
