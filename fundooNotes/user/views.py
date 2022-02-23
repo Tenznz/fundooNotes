@@ -1,6 +1,8 @@
 import json
 import logging
 import jwt
+
+from rest_framework.exceptions import ValidationError
 from django.http import HttpResponse
 from django.contrib.auth.models import auth
 from django.http import JsonResponse
@@ -8,9 +10,11 @@ from rest_framework.response import Response
 from user.models import User
 from user.serializers import UserSerializer
 from rest_framework.views import APIView
-from django.core.mail import send_mail
 from .utils import EncodeDecodeToken
 from rest_framework import status
+from user.task import send_email_task
+# import user.task
+from user.email import Email
 
 logging.basicConfig(filename="views.log", filemode="w")
 
@@ -30,18 +34,23 @@ class UserRegistration(APIView):
 
             token = EncodeDecodeToken.encode_token(payload=user.pk)
             print(token)
-            decoded_token = EncodeDecodeToken.decode_token(token=token)
-            print(decoded_token)
-            url = "http://127.0.0.1:8000/user/validate/" + str(token)
-            print(url)
-            # send_mail(subject, message, from_email, [to_email], fail_silently=False)
-            send_mail("register", url, serializer.data['email'], ["dhugkar95@gmail.com"], fail_silently=False)
+            # send_mail_task.delay(email=serializer.data["email"], token=token)
+            # Email().send_email(token, serializer.data["email"])
             return Response({"message": "data store successfully",
                              "data": {"username": serializer.data}})
 
+        except ValidationError as e:
+            logging.error(e)
+            return Response(serializer.errors)
+
         except Exception as e:
             logging.error(e)
-            return JsonResponse(serializer.errors)
+            print(e)
+            return Response(
+                {
+                    "message": "data storing failed"
+                },
+                status=status.HTTP_400_BAD_REQUEST)
 
     def get(self, request):
         user = User.objects.all()
@@ -73,9 +82,9 @@ class UserLogin(APIView):
 class ValidateToken(APIView):
     def get(self, request, token):
         try:
-            print(token)
+            # print(token)
             decoded_token = EncodeDecodeToken.decode_token(token=token)
-            print(decoded_token)
+            # print(decoded_token)
             user = User.objects.get(id=decoded_token.get('id'))
             user.is_verified = True
             serializer = UserSerializer(user)
