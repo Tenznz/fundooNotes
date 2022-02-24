@@ -42,3 +42,4 @@ class NoteSerializer(serializers.ModelSerializer):
             created_at=validate_data.get("created_at")
         )
         return notes
+

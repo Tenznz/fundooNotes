@@ -66,7 +66,7 @@ class UserLogin(APIView):
             username = request.data.get("username")
             password = request.data.get("password")
             user = auth.authenticate(username=username, password=password)
-            print(user)
+            # print(user)
             if user is not None:
                 UserSerializer(user)
                 token = EncodeDecodeToken.encode_token(payload=user.pk)
