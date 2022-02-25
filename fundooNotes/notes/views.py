@@ -16,6 +16,7 @@ logging.basicConfig(filename="views.log", filemode="w")
 
 
 class Notes(APIView):
+    """ class based views for curd operation of user note """
 
     @swagger_auto_schema(manual_parameters=[
         openapi.Parameter('TOKEN', openapi.IN_HEADER, type=openapi.TYPE_STRING)
@@ -29,6 +30,11 @@ class Notes(APIView):
         ))
     @verify_token
     def post(self, request):
+        """
+        creating note of user
+        :param request: note details
+        :return:response
+        """
         data = request.data
         data["user_id"] = request.data.get("id")
         # print(data)
@@ -55,6 +61,11 @@ class Notes(APIView):
     ], operation_summary="get note by user_id")
     @verify_token
     def get(self, request):
+        """
+        get note of user
+        :param request:
+        :return:response
+        """
         user_id = request.data.get("id")
         try:
             data = RedisOperation().get_note(user_id=user_id).values()
@@ -88,6 +99,11 @@ class Notes(APIView):
         ))
     @verify_token
     def delete(self, request):
+        """
+        delete note of user
+        :param request: note_id
+        :return:response
+        """
         try:
             note = Note.objects.get(pk=request.data["note_id"])
             print(note)
@@ -118,6 +134,11 @@ class Notes(APIView):
         ))
     @verify_token
     def put(self, request):
+        """
+        update note of user
+        :param request: note id
+        :return:response 
+        """
         try:
             data = request.data
             data["user_id"] = request.data.get("id")

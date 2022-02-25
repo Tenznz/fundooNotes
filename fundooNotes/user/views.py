@@ -21,6 +21,8 @@ logging.basicConfig(filename="views.log", filemode="w")
 
 
 class UserRegistration(APIView):
+    """ class based views for User registration """
+
     @swagger_auto_schema(
         operation_summary="registration",
         request_body=openapi.Schema(
@@ -36,6 +38,11 @@ class UserRegistration(APIView):
             }
         ))
     def post(self, request):
+        """
+        this method is use for user Registration
+        :param request: user_details
+        :return:response
+        """
         serializer = UserSerializer(data=request.data)
         try:
             serializer.is_valid(raise_exception=True)
@@ -49,8 +56,7 @@ class UserRegistration(APIView):
 
             token = EncodeDecodeToken.encode_token(payload=user.pk)
             print(token)
-            send_email_task.delay(email=serializer.data["email"], token=str(token))
-            # sendemailtask.delay()
+            # send_email_task.delay(email=serializer.data["email"], token=str(token))
             # # Email().send_email(token, serializer.data["email"])
             return Response({"message": "data store successfully",
                              "data": {"username": serializer.data}})
@@ -72,12 +78,19 @@ class UserRegistration(APIView):
         operation_summary="display",
         )
     def get(self, request):
+        """
+        this method get user details
+        :param request:
+        :return:response
+        """
         user = User.objects.all()
         serializer = UserSerializer(user, many=True)
         return JsonResponse(serializer.data, safe=False)
 
 
 class UserLogin(APIView):
+    """ class based views for user login """
+
     @swagger_auto_schema(
         operation_summary="login",
         request_body=openapi.Schema(
@@ -88,6 +101,11 @@ class UserLogin(APIView):
             }
         ))
     def post(self, request):
+        """
+        this method is use for user login
+        :param request: username and password
+        :return:response
+        """
         try:
             username = request.data.get("username")
             password = request.data.get("password")
@@ -107,10 +125,18 @@ class UserLogin(APIView):
 
 
 class ValidateToken(APIView):
+    """class based views for token validation"""
+
     @swagger_auto_schema(
         operation_summary="get user"
     )
     def get(self, request, token):
+        """
+        this method is use for get token
+        :param request:
+        :param token:
+        :return:response
+        """
         try:
             # print(token)
             decoded_token = EncodeDecodeToken.decode_token(token=token)

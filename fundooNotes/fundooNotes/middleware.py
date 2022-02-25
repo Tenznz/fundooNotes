@@ -3,15 +3,21 @@ import json
 from user.models import LoginData, User
 from rest_framework.reverse import reverse
 
-# logging.basicConfig(level=logging.INFO, file='middleware.log')
 logging.basicConfig(filename="views.log", filemode="w")
 
 
 class CustomMiddleware:
+    """ middleware for login data """
+
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
+        """
+        adding to login_data table when user login
+        :param request:
+        :return:response
+        """
         try:
             if reverse("login"):
                 # if self.get_response is not None:

@@ -9,29 +9,9 @@ logging.basicConfig(filename="views.log", filemode="w")
 
 
 # for postman
-# def verify_token(function):
-#     def wrapper(self, request):
-#         print(request.META)
-#         if 'HTTP_AUTHORIZATION' not in request.META:
-#             resp = Response({'message': 'Token not provided in the header'})
-#             resp.status_code = 400
-#             logging.info('Token not provided in the header')
-#             return resp
-#         token = request.META['HTTP_AUTHORIZATION']
-#         print("in verify", token)
-#         encode = token.split(" ")
-#         # print(encode[1])
-#         id = EncodeDecodeToken.decode_token(encode[1])
-#         print(id)
-#         request.data.update({'id': id.get("id")})
-#         return function(self, request)
-#
-#     return wrapper
-
-# for swaggar
 def verify_token(function):
     def wrapper(self, request):
-        # print(request.META)
+        print(request.META)
         if 'HTTP_TOKEN' not in request.META:
             resp = Response({'message': 'Token not provided in the header'})
             resp.status_code = 400
