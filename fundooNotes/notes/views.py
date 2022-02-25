@@ -1,83 +1,165 @@
 import logging
+import json
 
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
+from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Note
 from .serializers import NoteSerializer
 from django.http import JsonResponse
-from rest_framework.parsers import JSONParser
 from django.core.mail import send_mail
-from .utils import verify_token
-
+from .utils import verify_token, RedisOperation
 
 logging.basicConfig(filename="views.log", filemode="w")
 
 
-# Create your views here.
 class Notes(APIView):
+    """ class based views for curd operation of user note """
+
+    @swagger_auto_schema(manual_parameters=[
+        openapi.Parameter('TOKEN', openapi.IN_HEADER, type=openapi.TYPE_STRING)
+    ], operation_summary="Add notes",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'title': openapi.Schema(type=openapi.TYPE_STRING, description="title"),
+                'description': openapi.Schema(type=openapi.TYPE_STRING, description="description")
+            }
+        ))
     @verify_token
     def post(self, request):
-        serializer = NoteSerializer(data=request.data)
+        """
+        creating note of user
+        :param request: note details
+        :return:response
+        """
+        data = request.data
+        data["user_id"] = request.data.get("id")
+        serializer = NoteSerializer(data=data)
         try:
             serializer.is_valid(raise_exception=True)
             serializer.save()
+            RedisOperation().add_note(request.data.get("id"), note=serializer.data)
             return Response(
                 {
                     "message": "Data store successfully",
                     "data": serializer.data
-                })
+                }, status=status.HTTP_201_CREATED)
         except Exception as e:
             logging.error(e)
-            return Response(serializer.errors)
+            return Response(
+                {
+                    "message": "Data not stored"
+                },
+                status=status.HTTP_400_BAD_REQUEST)
 
+    @swagger_auto_schema(manual_parameters=[
+        openapi.Parameter('TOKEN', openapi.IN_HEADER, type=openapi.TYPE_STRING)
+    ], operation_summary="get note by user_id")
     @verify_token
     def get(self, request):
-        user_id = request.data.get("user_id")
-        note = Note.objects.filter(user_id_id=user_id)
-        serializer = NoteSerializer(note, many=True)
-        # print(repr(serializer))
-        print(serializer.data)
-        return Response({
-            "message": "user found",
-            "data": serializer.data
-        })
+        """
+        get note of user
+        :param request:
+        :return:response
+        """
+        user_id = request.data.get("id")
+        try:
+            data = RedisOperation().get_note(user_id=user_id).values()
+            if data is not None:
+                return Response({
+                    "message": "user found",
+                    "data": data
+                })
+            else:
+                print("data from db")
+                note = Note.objects.filter(user_id_id=user_id)
+                serializer = NoteSerializer(note, many=True)
+                print(serializer.data)
+                return Response({
+                    "message": "user found",
+                    "data": serializer.data
+                },status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({
+                "message": "user not found",
+            },status=status.HTTP_400_BAD_REQUEST)
 
+    @swagger_auto_schema(manual_parameters=[
+        openapi.Parameter('TOKEN', openapi.IN_HEADER, type=openapi.TYPE_STRING)
+    ], operation_summary="delete note",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'note_id': openapi.Schema(type=openapi.TYPE_INTEGER, description="note_id"),
+            }
+        ))
     @verify_token
     def delete(self, request):
+        """
+        delete note of user
+        :param request: note_id
+        :return:response
+        """
         try:
-            note_id = request.data.get("id")
-            note = Note.objects.get(id=note_id)
+            note = Note.objects.get(pk=request.data["note_id"])
+            print(note)
+            RedisOperation().delete_note(request.data.get("id"), request.data.get("note_id"))
             note.delete()
             return Response({
-                "message": "user delete successfully",
-                "data": note_id
-            })
-        except Exception as e:
-            logging.error(e)
-            return Response({
-                "message": "user not found"
-            })
-
-    @verify_token
-    def put(self, request):
-        note = Note.objects.get(pk=request.data["id"])
-        print(note)
-        serializer = NoteSerializer(note, data=request.data)
-        try:
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response({
-                "message": "user update successfully",
-                "data": serializer.data
-            })
+                "message": "user delete successfully"
+            },status=status.HTTP_201_CREATED)
         except Exception as e:
             logging.error(e)
             print(e)
-            Response(serializer.errors)
+            return Response(
+                {
+                    "message": "Data not deleted"
+                },
+                status=status.HTTP_400_BAD_REQUEST)
 
+    @swagger_auto_schema(manual_parameters=[
+        openapi.Parameter('TOKEN', openapi.IN_HEADER, type=openapi.TYPE_STRING)
+    ], operation_summary="Update notes",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'note_id': openapi.Schema(type=openapi.TYPE_INTEGER, description="note_id"),
+                'title': openapi.Schema(type=openapi.TYPE_STRING, description="title"),
+                'description': openapi.Schema(type=openapi.TYPE_STRING, description="description")
+            }
+        ))
+    @verify_token
+    def put(self, request):
+        """
+        update note of user
+        :param request: note id
+        :return:response 
+        """
+        try:
+            data = request.data
+            data["user_id"] = request.data.get("id")
+            note = Note.objects.get(pk=request.data["note_id"])
+            print(note)
+            serializer = NoteSerializer(note, data=data)
 
-# def note_list(request):
-#     if request.method == 'GET':
-#         note = Note.objects.all()
-#         serializer = NoteSerializer(note, many=True)
-#         return JsonResponse(serializer.data, safe=False)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            RedisOperation().update_note(serializer.data)
+            return Response(
+                {
+                    "message": "user update successfully",
+                    "data": serializer.data
+                },
+                status=status.HTTP_201_CREATED
+            )
+        except Exception as e:
+            logging.error(e)
+            print(e)
+            return Response(
+                {
+                    "message": "Data not updated"
+                },
+                status=status.HTTP_400_BAD_REQUEST)
