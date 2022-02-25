@@ -8,18 +8,38 @@ from .serializers import NoteSerializer
 logging.basicConfig(filename="views.log", filemode="w")
 
 
+# for postman
+# def verify_token(function):
+#     def wrapper(self, request):
+#         print(request.META)
+#         if 'HTTP_AUTHORIZATION' not in request.META:
+#             resp = Response({'message': 'Token not provided in the header'})
+#             resp.status_code = 400
+#             logging.info('Token not provided in the header')
+#             return resp
+#         token = request.META['HTTP_AUTHORIZATION']
+#         print("in verify", token)
+#         encode = token.split(" ")
+#         # print(encode[1])
+#         id = EncodeDecodeToken.decode_token(encode[1])
+#         print(id)
+#         request.data.update({'id': id.get("id")})
+#         return function(self, request)
+#
+#     return wrapper
+
+# for swaggar
 def verify_token(function):
     def wrapper(self, request):
         # print(request.META)
-        if 'HTTP_AUTHORIZATION' not in request.META:
-            resp = JsonResponse({'message': 'Token not provided in the header'})
+        if 'HTTP_TOKEN' not in request.META:
+            resp = Response({'message': 'Token not provided in the header'})
             resp.status_code = 400
-            logger.info('Token not provided in the header')
+            logging.info('Token not provided in the header')
             return resp
-        token = request.META['HTTP_AUTHORIZATION']
-        encode = token.split(" ")
-        # print(encode[1])
-        id = EncodeDecodeToken.decode_token(encode[1])
+        token = request.META['HTTP_TOKEN']
+        print("in verify", token)
+        id = EncodeDecodeToken.decode_token(token)
         print(id)
         request.data.update({'id': id.get("id")})
         return function(self, request)
@@ -75,9 +95,9 @@ class RedisOperation:
                 new_note = {int(note.get('id')): note}
                 added_note = {**existing_note, **new_note}
                 self.redis_obj.set(user_id, json.dumps(added_note))
-            logging.error(e)
         except Exception as e:
             logging.error(e)
+            raise e
 
     def delete_note(self, user_id, note_id):
         """

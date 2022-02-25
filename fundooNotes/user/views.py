@@ -2,6 +2,8 @@ import json
 import logging
 import jwt
 
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework.exceptions import ValidationError
 from django.http import HttpResponse
 from django.contrib.auth.models import auth
@@ -13,13 +15,26 @@ from rest_framework.views import APIView
 from .utils import EncodeDecodeToken
 from rest_framework import status
 from user.task import send_email_task
-# import user.task
 from user.email import Email
 
 logging.basicConfig(filename="views.log", filemode="w")
 
 
 class UserRegistration(APIView):
+    @swagger_auto_schema(
+        operation_summary="registration",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'username': openapi.Schema(type=openapi.TYPE_STRING, description='username'),
+                'first_name': openapi.Schema(type=openapi.TYPE_STRING, description='first_name'),
+                'last_name': openapi.Schema(type=openapi.TYPE_STRING, description='last_name'),
+                'password': openapi.Schema(type=openapi.TYPE_STRING, description='password'),
+                'age': openapi.Schema(type=openapi.TYPE_INTEGER, description='age'),
+                'email': openapi.Schema(type=openapi.TYPE_STRING, description='email'),
+                'phone': openapi.Schema(type=openapi.TYPE_STRING, description='phone'),
+            }
+        ))
     def post(self, request):
         serializer = UserSerializer(data=request.data)
         try:
@@ -53,6 +68,9 @@ class UserRegistration(APIView):
                 },
                 status=status.HTTP_400_BAD_REQUEST)
 
+    @swagger_auto_schema(
+        operation_summary="display",
+        )
     def get(self, request):
         user = User.objects.all()
         serializer = UserSerializer(user, many=True)
@@ -60,7 +78,15 @@ class UserRegistration(APIView):
 
 
 class UserLogin(APIView):
-
+    @swagger_auto_schema(
+        operation_summary="login",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'username': openapi.Schema(type=openapi.TYPE_STRING, description='username'),
+                'password': openapi.Schema(type=openapi.TYPE_STRING, description='password'),
+            }
+        ))
     def post(self, request):
         try:
             username = request.data.get("username")
@@ -81,6 +107,9 @@ class UserLogin(APIView):
 
 
 class ValidateToken(APIView):
+    @swagger_auto_schema(
+        operation_summary="get user"
+    )
     def get(self, request, token):
         try:
             # print(token)

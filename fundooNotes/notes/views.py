@@ -1,6 +1,8 @@
 import logging
 import json
 
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -14,6 +16,17 @@ logging.basicConfig(filename="views.log", filemode="w")
 
 
 class Notes(APIView):
+
+    @swagger_auto_schema(manual_parameters=[
+        openapi.Parameter('TOKEN', openapi.IN_HEADER, type=openapi.TYPE_STRING)
+    ], operation_summary="Add notes",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'title': openapi.Schema(type=openapi.TYPE_STRING, description="title"),
+                'description': openapi.Schema(type=openapi.TYPE_STRING, description="description")
+            }
+        ))
     @verify_token
     def post(self, request):
         data = request.data
@@ -28,11 +41,18 @@ class Notes(APIView):
                 {
                     "message": "Data store successfully",
                     "data": serializer.data
-                })
+                }, status=status.HTTP_201_CREATED)
         except Exception as e:
             logging.error(e)
-            return Response(serializer.errors)
+            return Response(
+                {
+                    "message": "Data not stored"
+                },
+                status=status.HTTP_400_BAD_REQUEST)
 
+    @swagger_auto_schema(manual_parameters=[
+        openapi.Parameter('TOKEN', openapi.IN_HEADER, type=openapi.TYPE_STRING)
+    ], operation_summary="get note by user_id")
     @verify_token
     def get(self, request):
         user_id = request.data.get("id")
@@ -57,6 +77,15 @@ class Notes(APIView):
                 "message": "user not found",
             })
 
+    @swagger_auto_schema(manual_parameters=[
+        openapi.Parameter('TOKEN', openapi.IN_HEADER, type=openapi.TYPE_STRING)
+    ], operation_summary="delete note",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'note_id': openapi.Schema(type=openapi.TYPE_INTEGER, description="note_id"),
+            }
+        ))
     @verify_token
     def delete(self, request):
         try:
@@ -76,16 +105,26 @@ class Notes(APIView):
                 },
                 status=status.HTTP_400_BAD_REQUEST)
 
-    #
-
+    @swagger_auto_schema(manual_parameters=[
+        openapi.Parameter('TOKEN', openapi.IN_HEADER, type=openapi.TYPE_STRING)
+    ], operation_summary="Update notes",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'note_id': openapi.Schema(type=openapi.TYPE_INTEGER, description="note_id"),
+                'title': openapi.Schema(type=openapi.TYPE_STRING, description="title"),
+                'description': openapi.Schema(type=openapi.TYPE_STRING, description="description")
+            }
+        ))
     @verify_token
     def put(self, request):
-        data = request.data
-        data["user_id"] = request.data.get("id")
-        note = Note.objects.get(pk=request.data["node_id"])
-        print(note)
-        serializer = NoteSerializer(note, data=data)
         try:
+            data = request.data
+            data["user_id"] = request.data.get("id")
+            note = Note.objects.get(pk=request.data["note_id"])
+            print(note)
+            serializer = NoteSerializer(note, data=data)
+
             serializer.is_valid(raise_exception=True)
             serializer.save()
             RedisOperation().update_note(serializer.data)

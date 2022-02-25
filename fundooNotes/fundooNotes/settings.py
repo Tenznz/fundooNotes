@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'user',
     'notes',
     'django_celery_results',
+    'drf_yasg',
 
 ]
 
@@ -156,3 +157,26 @@ CELERY_ACCEPT_CONTENT = ['json', 'application/text']
 CELERY_RESULT_BACKEND = 'redis'
 # CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 CELERY_CACHE_BACKEND = 'default'
+
+# swagger settings
+SWAGGER_SETTINGS = {
+    'SECURITY_DEFINITIONS': {
+        "api_key": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
+}
+# SWAGGER_SETTINGS = {
+#     'SECURITY_DEFINITIONS': {
+#         'Basic': {
+#             'type': 'basic'
+#         },
+#         'Bearer': {
+#             'type': 'apiKey',
+#             'name': 'Authorization',
+#             'in': 'header'
+#         }
+#     }
+# }

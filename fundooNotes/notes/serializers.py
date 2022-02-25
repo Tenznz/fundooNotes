@@ -38,8 +38,7 @@ class NoteSerializer(serializers.ModelSerializer):
         notes = Note.objects.create(
             title=validate_data.get("title"),
             description=validate_data.get("description"),
-            user_id=validate_data.get("user_id"),
-            created_at=validate_data.get("created_at")
+            user_id=validate_data.get("user_id")
         )
         return notes
 
