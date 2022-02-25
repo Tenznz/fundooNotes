@@ -37,7 +37,6 @@ class Notes(APIView):
         """
         data = request.data
         data["user_id"] = request.data.get("id")
-        # print(data)
         serializer = NoteSerializer(data=data)
         try:
             serializer.is_valid(raise_exception=True)
@@ -82,11 +81,11 @@ class Notes(APIView):
                 return Response({
                     "message": "user found",
                     "data": serializer.data
-                })
+                },status=status.HTTP_200_OK)
         except Exception as e:
             return Response({
                 "message": "user not found",
-            })
+            },status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(manual_parameters=[
         openapi.Parameter('TOKEN', openapi.IN_HEADER, type=openapi.TYPE_STRING)
@@ -111,7 +110,7 @@ class Notes(APIView):
             note.delete()
             return Response({
                 "message": "user delete successfully"
-            })
+            },status=status.HTTP_201_CREATED)
         except Exception as e:
             logging.error(e)
             print(e)
@@ -149,10 +148,13 @@ class Notes(APIView):
             serializer.is_valid(raise_exception=True)
             serializer.save()
             RedisOperation().update_note(serializer.data)
-            return Response({
-                "message": "user update successfully",
-                "data": serializer.data
-            })
+            return Response(
+                {
+                    "message": "user update successfully",
+                    "data": serializer.data
+                },
+                status=status.HTTP_201_CREATED
+            )
         except Exception as e:
             logging.error(e)
             print(e)

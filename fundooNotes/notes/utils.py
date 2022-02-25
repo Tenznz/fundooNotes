@@ -8,7 +8,6 @@ from .serializers import NoteSerializer
 logging.basicConfig(filename="views.log", filemode="w")
 
 
-# for postman
 def verify_token(function):
     def wrapper(self, request):
         print(request.META)
@@ -18,9 +17,7 @@ def verify_token(function):
             logging.info('Token not provided in the header')
             return resp
         token = request.META['HTTP_TOKEN']
-        print("in verify", token)
         id = EncodeDecodeToken.decode_token(token)
-        print(id)
         request.data.update({'id': id.get("id")})
         return function(self, request)
 
@@ -43,7 +40,6 @@ class RedisOperation:
             data = self.redis_obj.get(user_id)
             if data is None:
                 return None
-            # print(type(json.loads(data)))
             return json.loads(data)
         except Exception as e:
             logging.error(e)
@@ -58,15 +54,9 @@ class RedisOperation:
         """
         try:
             print("data added to redis server")
-            # print(type(note))
-            # print(user_id)
             existing_note = self.get_note(user_id)
-            print("existing", existing_note)
             dict_data = {user_id: existing_note}
-            print("dict_dat", dict_data)
-            print(existing_note)
             if existing_note is None:
-                # print(json.loads(note))
                 new_note = {int(note.get('id')): note}
 
                 dict_data[user_id] = new_note
@@ -86,11 +76,9 @@ class RedisOperation:
         :param note_id:
         :return:
         """
-
         print("data delete to redis server")
         try:
             note_list = json.loads(self.redis_obj.get(user_id))
-            print(note_list)
             if note_list.get(str(note_id)):
                 note_list.pop(str(note_id))
                 self.redis_obj.put(user_id, json.dumps(note_list))
@@ -107,9 +95,7 @@ class RedisOperation:
         try:
             user_id = note.get('user_id')
             id = str(note.get("id"))
-            print(user_id)
             note_dict = json.loads(self.redis_obj.get(user_id))
-            # print(note_dict.get(id))
 
             if note_dict.get(id):
                 note_dict.update({id: note})

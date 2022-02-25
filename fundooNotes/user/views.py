@@ -7,7 +7,6 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework.exceptions import ValidationError
 from django.http import HttpResponse
 from django.contrib.auth.models import auth
-from django.http import JsonResponse
 from rest_framework.response import Response
 from user.models import User
 from user.serializers import UserSerializer
@@ -56,14 +55,16 @@ class UserRegistration(APIView):
 
             token = EncodeDecodeToken.encode_token(payload=user.pk)
             print(token)
-            # send_email_task.delay(email=serializer.data["email"], token=str(token))
-            # # Email().send_email(token, serializer.data["email"])
-            return Response({"message": "data store successfully",
-                             "data": {"username": serializer.data}})
+            return Response(
+                {
+                    "message": "data store successfully",
+                    "data": serializer.data
+                },
+                status=status.HTTP_201_CREATED)
 
         except ValidationError as e:
             logging.error(e)
-            return Response(serializer.errors)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         except Exception as e:
             logging.error(e)
@@ -76,7 +77,7 @@ class UserRegistration(APIView):
 
     @swagger_auto_schema(
         operation_summary="display",
-        )
+    )
     def get(self, request):
         """
         this method get user details
@@ -85,7 +86,11 @@ class UserRegistration(APIView):
         """
         user = User.objects.all()
         serializer = UserSerializer(user, many=True)
-        return JsonResponse(serializer.data, safe=False)
+        return Response({
+                    "message": "data fetch successfully",
+                    "data": serializer.data
+                },
+                status=status.HTTP_200_OK)
 
 
 class UserLogin(APIView):
@@ -110,18 +115,22 @@ class UserLogin(APIView):
             username = request.data.get("username")
             password = request.data.get("password")
             user = auth.authenticate(username=username, password=password)
-            # print(user)
             if user is not None:
                 UserSerializer(user)
                 token = EncodeDecodeToken.encode_token(payload=user.pk)
+                return Response(
+                    {
+                        "message": "login successfully", "data": token
+                    },
+                    status=status.HTTP_201_CREATED)
 
-                return Response({"message": "login successfully", "data": token})
-                # return Response({"message": "user login successful", "data": username})
-            else:
-                return JsonResponse({"message": "user login unsuccessful"})
         except Exception as e:
             logging.error(e)
-            return JsonResponse({"message": "login unsuccessful"})
+            return Response(
+                {
+                    "message": "user login unsuccessful"
+                },
+                status=status.HTTP_400_BAD_REQUEST)
 
 
 class ValidateToken(APIView):
@@ -138,9 +147,7 @@ class ValidateToken(APIView):
         :return:response
         """
         try:
-            # print(token)
             decoded_token = EncodeDecodeToken.decode_token(token=token)
-            # print(decoded_token)
             user = User.objects.get(id=decoded_token.get('id'))
             user.is_verified = True
             serializer = UserSerializer(user)
@@ -148,4 +155,4 @@ class ValidateToken(APIView):
                             status=status.HTTP_201_CREATED)
         except Exception as e:
             logging.error(e)
-            return HttpResponse(e)
+            return HttpResponse(e,status=status.HTTP_400_BAD_REQUEST)
