@@ -10,7 +10,6 @@ logging.basicConfig(filename="views.log", filemode="w")
 
 def verify_token(function):
     def wrapper(self, request):
-        print(request.META)
         if 'HTTP_TOKEN' not in request.META:
             resp = Response({'message': 'Token not provided in the header'})
             resp.status_code = 400

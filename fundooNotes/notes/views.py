@@ -41,7 +41,6 @@ class Notes(APIView):
         try:
             serializer.is_valid(raise_exception=True)
             serializer.save()
-            RedisOperation().add_note(request.data.get("id"), note=serializer.data)
             return Response(
                 {
                     "message": "Data store successfully",
@@ -67,25 +66,19 @@ class Notes(APIView):
         """
         user_id = request.data.get("id")
         try:
-            data = RedisOperation().get_note(user_id=user_id).values()
-            if data is not None:
-                return Response({
-                    "message": "user found",
-                    "data": data
-                })
-            else:
-                print("data from db")
-                note = Note.objects.filter(user_id_id=user_id)
-                serializer = NoteSerializer(note, many=True)
-                print(serializer.data)
-                return Response({
-                    "message": "user found",
-                    "data": serializer.data
-                },status=status.HTTP_200_OK)
+            print("data from db")
+            # note = Note.objects.filter(user_id_id=user_id)
+            note = Note.objects.raw(f"select * from notes_note where user_id_id={user_id}")
+            serializer = NoteSerializer(note, many=True)
+            print(serializer.data)
+            return Response({
+                "message": "user found",
+                "data": serializer.data
+            }, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({
                 "message": "user not found",
-            },status=status.HTTP_400_BAD_REQUEST)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(manual_parameters=[
         openapi.Parameter('TOKEN', openapi.IN_HEADER, type=openapi.TYPE_STRING)
@@ -104,13 +97,13 @@ class Notes(APIView):
         :return:response
         """
         try:
-            note = Note.objects.get(pk=request.data["note_id"])
+            note = Note.objects.raw(f"delete from notes_note where id={request.data.get('note_id')};")
             print(note)
-            RedisOperation().delete_note(request.data.get("id"), request.data.get("note_id"))
-            note.delete()
+            # note.delete()
+            note.save()
             return Response({
                 "message": "user delete successfully"
-            },status=status.HTTP_201_CREATED)
+            }, status=status.HTTP_201_CREATED)
         except Exception as e:
             logging.error(e)
             print(e)
@@ -141,17 +134,21 @@ class Notes(APIView):
         try:
             data = request.data
             data["user_id"] = request.data.get("id")
-            note = Note.objects.get(pk=request.data["note_id"])
-            print(note)
-            serializer = NoteSerializer(note, data=data)
-
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            RedisOperation().update_note(serializer.data)
+            # note = Note.objects.get(pk=request.data["note_id"])
+            note = Note.objects.raw(f"update notes_note set title='{request.data.get('title')}',"
+                                    f"description='{request.data.get('description')}' "
+                                    f"where id={request.data.get('note_id')};")
+            # print(note)
+            # serializer = NoteSerializer(note, data=data)
+            #
+            # serializer.is_valid(raise_exception=True)
+            # serializer.save()
+            # RedisOperation().update_note(serializer.data)
+            # note.save()
             return Response(
                 {
                     "message": "user update successfully",
-                    "data": serializer.data
+                    "data": note.pk
                 },
                 status=status.HTTP_201_CREATED
             )

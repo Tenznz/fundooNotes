@@ -45,14 +45,13 @@ class UserRegistration(APIView):
         serializer = UserSerializer(data=request.data)
         try:
             serializer.is_valid(raise_exception=True)
-            user = User.objects.create_user(username=serializer.data['username'],
-                                            first_name=serializer.data['first_name'],
-                                            last_name=serializer.data['last_name'],
-                                            password=serializer.data['password'],
-                                            age=serializer.data['age'],
-                                            email=serializer.data['email'],
-                                            phone=serializer.data['phone'])
-
+            # data = f"'{serializer.data['username']}','{serializer.data['first_name']}'," \
+            #        f"'{serializer.data['last_name']}'," \
+            #        f"'{serializer.data['password']}',{serializer.data['age']},'{serializer.data['email']}'," \
+            #        f"'{serializer.data['phone']}',{serializer.data['is_verified']} "
+            # user = User.objects.raw(f"INSERT INTO user_user(username,first_name,last_name,password,age,email,phone,"
+            #                         f"is_verified) VALUES ({data});")
+            user = serializer.create(validated_data=serializer.data)
             token = EncodeDecodeToken.encode_token(payload=user.pk)
             print(token)
             return Response(
@@ -84,13 +83,14 @@ class UserRegistration(APIView):
         :param request:
         :return:response
         """
-        user = User.objects.all()
+        user = User.objects.raw("select * from user_user;")
+        print(user)
         serializer = UserSerializer(user, many=True)
         return Response({
-                    "message": "data fetch successfully",
-                    "data": serializer.data
-                },
-                status=status.HTTP_200_OK)
+            "message": "data fetch successfully",
+            "data": serializer.data
+        },
+            status=status.HTTP_200_OK)
 
 
 class UserLogin(APIView):
@@ -148,11 +148,14 @@ class ValidateToken(APIView):
         """
         try:
             decoded_token = EncodeDecodeToken.decode_token(token=token)
-            user = User.objects.get(id=decoded_token.get('id'))
+            print(type(decoded_token.get('id')), decoded_token.get('id'))
+            id = decoded_token.get('id')
+            user = User.objects.raw(f"SELECT * FROM user_user where id = {id};")
+            print(user)
             user.is_verified = True
-            serializer = UserSerializer(user)
+            serializer = UserSerializer(user, many=True)
             return Response({"message": "Validation Successfully", "data": serializer.data},
                             status=status.HTTP_201_CREATED)
         except Exception as e:
             logging.error(e)
-            return HttpResponse(e,status=status.HTTP_400_BAD_REQUEST)
+            return HttpResponse(e, status=status.HTTP_400_BAD_REQUEST)
