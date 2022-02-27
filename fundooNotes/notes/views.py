@@ -97,10 +97,8 @@ class Notes(APIView):
         :return:response
         """
         try:
-            note = Note.objects.raw(f"delete from notes_note where id={request.data.get('note_id')};")
+            note = Note.objects.raw('delete from notes_note where id=%s', [request.data.get('note_id')])
             print(note)
-            # note.delete()
-            note.save()
             return Response({
                 "message": "user delete successfully"
             }, status=status.HTTP_201_CREATED)
@@ -135,20 +133,21 @@ class Notes(APIView):
             data = request.data
             data["user_id"] = request.data.get("id")
             # note = Note.objects.get(pk=request.data["note_id"])
-            note = Note.objects.raw(f"update notes_note set title='{request.data.get('title')}',"
-                                    f"description='{request.data.get('description')}' "
-                                    f"where id={request.data.get('note_id')};")
-            # print(note)
-            # serializer = NoteSerializer(note, data=data)
-            #
-            # serializer.is_valid(raise_exception=True)
-            # serializer.save()
+            note = Note.objects.raw("update notes_note set title='%s',description='%s' where id=%s",
+                                    [request.data.get('title'),
+                                     request.data.get('description'),
+                                     request.data.get('note_id')])
+            print(note)
+            serializer = NoteSerializer(note, data=data)
+            # # NoteSerializer(note, data=data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
             # RedisOperation().update_note(serializer.data)
             # note.save()
             return Response(
                 {
                     "message": "user update successfully",
-                    "data": note.pk
+                    # "data": serializer.data
                 },
                 status=status.HTTP_201_CREATED
             )
