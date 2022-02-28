@@ -17,20 +17,6 @@ class NoteList(ListCreateAPIView):
     queryset = Note.objects.all()
     permission = (permissions.IsAuthenticated,)
 
-    # @swagger_auto_schema(
-    #     manual_parameters=[
-    #         openapi.Parameter('TOKEN', openapi.IN_HEADER, type=openapi.TYPE_STRING)
-    #     ],
-    #     operation_summary="Add notes",
-    #     request_body=openapi.Schema(
-    #         type=openapi.TYPE_OBJECT,
-    #         properties={
-    #             'id': openapi.Schema(type=openapi.TYPE_INTEGER, discription="id"),
-    #             'title': openapi.Schema(type=openapi.TYPE_STRING, description="title"),
-    #             'description': openapi.Schema(type=openapi.TYPE_STRING, description="description"),
-    #             'user_id': openapi.Schema(type=openapi.TYPE_STRING, discription="user_id")
-    #         }
-    #     ))
     def perform_create(self, serializer):
         return serializer.save(id=self.request.data)
 
