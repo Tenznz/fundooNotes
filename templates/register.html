@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<H1>User Registration</H1>
+<div>
+<form action="register" method="post">
+    <label>Username</label>: <input type="text" name="username"><br>
+    <label>First Name</label>: <input type="text" name="first_name"><br>
+    <label>Last Name</label>: <input type="text" name="last_name"><br>
+    <label>Email</label>: <input type="text" name="email"><br>
+    <label>Password</label>: <input type="password" name="password"><br>
+    <label>age</label>: <input type="text" name="age"><br>
+    <label>phone</label>: <input type="text" name="phone"><br>
+    <label>is verified</label>:<input type="text" name="is_verified"><br>
+    <input type="submit">
+</form>
+    <form action="register" method="get">
+
+    <input type="submit">Click here to know user
+</form>
+</div>
+{% endblock %}

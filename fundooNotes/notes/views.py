@@ -18,16 +18,6 @@ logging.basicConfig(filename="views.log", filemode="w")
 class Notes(APIView):
     """ class based views for curd operation of user note """
 
-    @swagger_auto_schema(manual_parameters=[
-        openapi.Parameter('TOKEN', openapi.IN_HEADER, type=openapi.TYPE_STRING)
-    ], operation_summary="Add notes",
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'title': openapi.Schema(type=openapi.TYPE_STRING, description="title"),
-                'description': openapi.Schema(type=openapi.TYPE_STRING, description="description")
-            }
-        ))
     @verify_token
     def post(self, request):
         """
@@ -55,9 +45,6 @@ class Notes(APIView):
                 },
                 status=status.HTTP_400_BAD_REQUEST)
 
-    @swagger_auto_schema(manual_parameters=[
-        openapi.Parameter('TOKEN', openapi.IN_HEADER, type=openapi.TYPE_STRING)
-    ], operation_summary="get note by user_id")
     @verify_token
     def get(self, request):
         """
@@ -87,15 +74,6 @@ class Notes(APIView):
                 "message": "user not found",
             },status=status.HTTP_400_BAD_REQUEST)
 
-    @swagger_auto_schema(manual_parameters=[
-        openapi.Parameter('TOKEN', openapi.IN_HEADER, type=openapi.TYPE_STRING)
-    ], operation_summary="delete note",
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'note_id': openapi.Schema(type=openapi.TYPE_INTEGER, description="note_id"),
-            }
-        ))
     @verify_token
     def delete(self, request):
         """
@@ -120,17 +98,6 @@ class Notes(APIView):
                 },
                 status=status.HTTP_400_BAD_REQUEST)
 
-    @swagger_auto_schema(manual_parameters=[
-        openapi.Parameter('TOKEN', openapi.IN_HEADER, type=openapi.TYPE_STRING)
-    ], operation_summary="Update notes",
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'note_id': openapi.Schema(type=openapi.TYPE_INTEGER, description="note_id"),
-                'title': openapi.Schema(type=openapi.TYPE_STRING, description="title"),
-                'description': openapi.Schema(type=openapi.TYPE_STRING, description="description")
-            }
-        ))
     @verify_token
     def put(self, request):
         """

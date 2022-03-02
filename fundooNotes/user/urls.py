@@ -3,8 +3,7 @@ from user import views
 
 
 urlpatterns = [
+    path('', views.homes, name="home"),
     path('login', views.UserLogin.as_view(), name="login"),
-    path('register', views.UserRegistration.as_view(), name="registration"),
-    path('validate/<str:token>', views.ValidateToken.as_view(), name='validate')
-    # path('users', views.user_list)
+    path('register', views.UserRegistration.as_view(), name="register"),
 ]

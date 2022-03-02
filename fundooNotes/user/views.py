@@ -2,8 +2,8 @@ import json
 import logging
 import jwt
 
+from django.shortcuts import render
 from drf_yasg import openapi
-from drf_yasg.utils import swagger_auto_schema
 from rest_framework.exceptions import ValidationError
 from django.http import HttpResponse
 from django.contrib.auth.models import auth
@@ -15,27 +15,18 @@ from .utils import EncodeDecodeToken
 from rest_framework import status
 from user.task import send_email_task
 from user.email import Email
+from django.views.decorators.csrf import csrf_exempt
 
 logging.basicConfig(filename="views.log", filemode="w")
+
+
+def homes(request):
+    return render(request, 'register.html', {})
 
 
 class UserRegistration(APIView):
     """ class based views for User registration """
 
-    @swagger_auto_schema(
-        operation_summary="registration",
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'username': openapi.Schema(type=openapi.TYPE_STRING, description='username'),
-                'first_name': openapi.Schema(type=openapi.TYPE_STRING, description='first_name'),
-                'last_name': openapi.Schema(type=openapi.TYPE_STRING, description='last_name'),
-                'password': openapi.Schema(type=openapi.TYPE_STRING, description='password'),
-                'age': openapi.Schema(type=openapi.TYPE_INTEGER, description='age'),
-                'email': openapi.Schema(type=openapi.TYPE_STRING, description='email'),
-                'phone': openapi.Schema(type=openapi.TYPE_STRING, description='phone'),
-            }
-        ))
     def post(self, request):
         """
         this method is use for user Registration
@@ -55,29 +46,17 @@ class UserRegistration(APIView):
 
             token = EncodeDecodeToken.encode_token(payload=user.pk)
             print(token)
-            return Response(
-                {
-                    "message": "data store successfully",
-                    "data": serializer.data
-                },
-                status=status.HTTP_201_CREATED)
-
+            return render(request, 'login.html')
         except ValidationError as e:
             logging.error(e)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            # return render(request, 'display.html', {'result': serializer.errors})
+            return render(request, 'register.html')
 
         except Exception as e:
             logging.error(e)
             print(e)
-            return Response(
-                {
-                    "message": "data storing failed"
-                },
-                status=status.HTTP_400_BAD_REQUEST)
+        return HttpResponse(request, e)
 
-    @swagger_auto_schema(
-        operation_summary="display",
-    )
     def get(self, request):
         """
         this method get user details
@@ -86,73 +65,33 @@ class UserRegistration(APIView):
         """
         user = User.objects.all()
         serializer = UserSerializer(user, many=True)
-        return Response({
-                    "message": "data fetch successfully",
-                    "data": serializer.data
-                },
-                status=status.HTTP_200_OK)
+        return render(request, 'display.html', {'result': serializer.data})
 
 
 class UserLogin(APIView):
     """ class based views for user login """
 
-    @swagger_auto_schema(
-        operation_summary="login",
-        request_body=openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                'username': openapi.Schema(type=openapi.TYPE_STRING, description='username'),
-                'password': openapi.Schema(type=openapi.TYPE_STRING, description='password'),
-            }
-        ))
+    # @csrf_exempt
     def post(self, request):
         """
         this method is use for user login
         :param request: username and password
         :return:response
         """
+
         try:
+            # print(request.POST['username'])
+            # print(request.data.get('password'))
             username = request.data.get("username")
             password = request.data.get("password")
             user = auth.authenticate(username=username, password=password)
+            print(user.pk)
             if user is not None:
-                UserSerializer(user)
+                serializer = UserSerializer(user)
                 token = EncodeDecodeToken.encode_token(payload=user.pk)
-                return Response(
-                    {
-                        "message": "login successfully", "data": token
-                    },
-                    status=status.HTTP_201_CREATED)
+                print(token)
+                return render(request, 'display.html', {'result': serializer.data})
 
         except Exception as e:
             logging.error(e)
-            return Response(
-                {
-                    "message": "user login unsuccessful"
-                },
-                status=status.HTTP_400_BAD_REQUEST)
-
-
-class ValidateToken(APIView):
-    """class based views for token validation"""
-
-    @swagger_auto_schema(
-        operation_summary="get user"
-    )
-    def get(self, request, token):
-        """
-        this method is use for get token
-        :param request:
-        :param token:
-        :return:response
-        """
-        try:
-            decoded_token = EncodeDecodeToken.decode_token(token=token)
-            user = User.objects.get(id=decoded_token.get('id'))
-            user.is_verified = True
-            serializer = UserSerializer(user)
-            return Response({"message": "Validation Successfully", "data": serializer.data},
-                            status=status.HTTP_201_CREATED)
-        except Exception as e:
-            logging.error(e)
-            return HttpResponse(e,status=status.HTTP_400_BAD_REQUEST)
+            return HttpResponse(request, 'display.html', {'result': e})
