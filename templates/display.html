@@ -1,6 +1,44 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<H1>user details</H1>
-    {{result}}
+<!--    {{result}}-->
+<div class="table-main">
+    <div class="form-head">User Registration Form</div>
+    <table id="table-display" class="table">
+        <tr>
+            <th>username</th>
+            <th>first name</th>
+            <th>last name</th>
+            <th>password</th>
+            <th>age</th>
+            <th>email</th>
+            <th>phone</th>
+            <th>is verified</th>
+        </tr>
+        <tr>
+            <td>{{result.username}}</td>
+            <td>{{result.first_name}}</td>
+            <td>{{result.last_name}}</td>
+            <td>{{result.password}}</td>
+            <td>{{result.age}}</td>
+            <td>{{result.email}}</td>
+            <td>{{result.phone}}</td>
+            <td>{{result.is_verified}}</td>
+        </tr>
+        {% for data in result %}
+            <tr>
+                <td>{{data.username}}</td>
+                <td>{{data.first_name}}</td>
+                <td>{{data.last_name}}</td>
+                <td>{{data.password}}</td>
+                <td>{{data.age}}</td>
+                <td>{{data.email}}</td>
+                <td>{{data.phone}}</td>
+                <td>{{data.is_verified}}</td>
+            </tr>
+        {% endfor %}
+
+    </table>
+</div>
+
 {% endblock %}

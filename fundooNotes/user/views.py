@@ -21,7 +21,7 @@ logging.basicConfig(filename="views.log", filemode="w")
 
 
 def homes(request):
-    return render(request, 'register.html', {})
+    return render(request, 'Register.html', {})
 
 
 class UserRegistration(APIView):
@@ -55,7 +55,7 @@ class UserRegistration(APIView):
         except Exception as e:
             logging.error(e)
             print(e)
-        return HttpResponse(request, e)
+        return render(request, 'error.html', {'result': 'user not able to register'})
 
     def get(self, request):
         """
@@ -79,6 +79,7 @@ class UserLogin(APIView):
         :return:response
         """
 
+        serializer = None
         try:
             # print(request.POST['username'])
             # print(request.data.get('password'))
@@ -94,4 +95,4 @@ class UserLogin(APIView):
 
         except Exception as e:
             logging.error(e)
-            return HttpResponse(request, 'display.html', {'result': e})
+            return render(request, 'error.html', {'result': "username or password incorrect..!!"})

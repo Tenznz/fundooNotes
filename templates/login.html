@@ -1,12 +1,13 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<H1>lOGIN</H1>
+<H1>LOGIN</H1>
 <form action="login" method="post">
-    <label>Username</label>: <input type="text" name="username"><br>
-    <label >Password</label>: <input type="password" name="password"><br>
+    <label class="text label">Username</label>: <input type="text" name="username"><br>
+    <label class="text label">Password</label>: <input type="password" name="password"><br>
     <input type="submit">
-<!--    Not a register user? <a href="register.html">Sign Up</a>-->
+    Not a register user? <a href="http://127.0.0.1:8000/user/">Sign Up</a>
+
 </form>
 
 {% endblock %}
