@@ -1,10 +1,10 @@
-from datetime import datetime
 from rest_framework import serializers
-from .models import Note
+from notes.models import Note
 
 
 class NoteSerializer(serializers.ModelSerializer):
     """ Serializer is used to converting the python object """
+
     class Meta:
         model = Note
         fields = "__all__"
@@ -18,7 +18,11 @@ class NoteSerializer(serializers.ModelSerializer):
         notes = Note.objects.create(
             title=validate_data.get("title"),
             description=validate_data.get("description"),
-            user_id=validate_data.get("user_id")
+            user_id=validate_data.get("user_id"),
+            # created_at=validate_data.get("created_at"),
+            color=validate_data.get("color"),
+            # archive=validate_data.get("archive"),
+            # is_deleted=validate_data.get("is_deleted")
         )
+        print("notes")
         return notes
-

@@ -54,6 +54,7 @@ class UserRegistration(APIView):
                                             phone=serializer.data['phone'])
 
             token = EncodeDecodeToken.encode_token(payload=user.pk)
+            send_email_task(token, serializer.data.get("email"))
             print(token)
             return Response(
                 {
@@ -84,7 +85,8 @@ class UserRegistration(APIView):
         :param request:
         :return:response
         """
-        user = User.objects.all()
+        total=User.objects.all().count()
+        user = User.objects.all()[(total-10):total]
         serializer = UserSerializer(user, many=True)
         return Response({
                     "message": "data fetch successfully",
@@ -120,7 +122,7 @@ class UserLogin(APIView):
                 token = EncodeDecodeToken.encode_token(payload=user.pk)
                 return Response(
                     {
-                        "message": "login successfully", "data": token
+                        "message": "login successfully", "token": token
                     },
                     status=status.HTTP_201_CREATED)
 

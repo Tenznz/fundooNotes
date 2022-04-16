@@ -8,21 +8,48 @@ from .serializers import NoteSerializer
 logging.basicConfig(filename="views.log", filemode="w")
 
 
+# def verify_token(function):
+#     def wrapper(self, request):
+#         print(request.META)
+#         if 'HTTP_AUTHORIZATION' not in request.META:
+#             resp = Response({'message': 'Token not provided in the header'})
+#             resp.status_code = 401
+#             logging.info('Token not provided in the header')
+#             return resp
+#         token = request.META['HTTP_AUTHORIZATION']
+#         id = EncodeDecodeToken.decode_token(token)
+#         request.data.update({'id': id.get("id")})
+#         # print(id)
+#         return function(self, request)
+#
+#     return wrapper
 def verify_token(function):
     def wrapper(self, request):
         print(request.META)
-        if 'HTTP_TOKEN' not in request.META:
+        if 'HTTP_AUTHORIZATION' not in request.META:
             resp = Response({'message': 'Token not provided in the header'})
-            resp.status_code = 400
+            resp.status_code = 401
             logging.info('Token not provided in the header')
             return resp
-        token = request.META['HTTP_TOKEN']
+        token = request.META['HTTP_AUTHORIZATION']
         id = EncodeDecodeToken.decode_token(token)
         request.data.update({'id': id.get("id")})
         return function(self, request)
-
     return wrapper
 
+def delete_verify_token(function):
+    def wrapper(self, request,note_id):
+        print(request.META)
+        if 'HTTP_AUTHORIZATION' not in request.META:
+            resp = Response({'message': 'Token not provided in the header'})
+            resp.status_code = 401
+            logging.info('Token not provided in the header')
+            return resp
+        token = request.META['HTTP_AUTHORIZATION']
+        id = EncodeDecodeToken.decode_token(token)
+        request.data.update({'id': id.get("id")})
+        return function(self, request,note_id)
+    return wrapper
 
 class RedisOperation:
 

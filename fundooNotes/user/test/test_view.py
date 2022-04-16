@@ -25,7 +25,7 @@ class TestUser:
     def test_user(self, client):
         url = reverse("registration")
         user = {
-            "username": "Tenzin",
+            "username": "Tenzin2",
             "first_name": "Ten",
             "last_name": "duk",
             "password": "1234",
@@ -37,7 +37,7 @@ class TestUser:
         print(url)
         response = client.post(url, user)
         print(response.content)
-        assert response.status_code == 200
+        assert response.status_code == 201
 
     @pytest.mark.django_db
     def testlogin(self, client):
@@ -57,7 +57,7 @@ class TestUser:
         }
         url = reverse("login")
         response = client.post(url, data)
-        assert response.status_code == 200
+        assert response.status_code == 201
     # @pytest.mark.django_db
     # def test_login(self, client):
     #     url = reverse('login')
@@ -65,3 +65,5 @@ class TestUser:
     #     respone = client.post(url, login_data,)
     #
     #     assert respone.status_code == 201
+
+

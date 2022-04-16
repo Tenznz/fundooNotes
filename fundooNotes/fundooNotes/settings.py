@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/4.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.0/ref/settings/
 """
-
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-)r$-o1^19^4xwm=6nzr+$#t=bz5hk#i#7!u(9*2-0jb_ltz3pk
 DEBUG = True
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_HOST_USER = 'dhugkar95@gmail.com'
-EMAIL_HOST_PASSWORD = ""
+EMAIL_HOST_PASSWORD = os.environ.get('password')
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 # EMAIL_USE_SSL = True
@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'corsheaders',
     'user',
     'notes',
     'django_celery_results',
@@ -55,12 +56,13 @@ AUTH_USER_MODEL = "user.User"
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     # 'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'fundooNotes.middleware.CustomMiddleware'
+    # 'fundooNotes.middleware.CustomMiddleware'
 ]
 
 ROOT_URLCONF = 'fundooNotes.urls'
@@ -89,7 +91,8 @@ WSGI_APPLICATION = 'fundooNotes.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'mydatabase',
+        'NAME': 'fundoonotes',
+        # 'NAME': 'mydatabase',
         'USER': 'postgres',
         'PASSWORD': '1234',
         'HOST': 'localhost',
@@ -168,3 +171,6 @@ SWAGGER_SETTINGS = {
         }
     }
 }
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+]

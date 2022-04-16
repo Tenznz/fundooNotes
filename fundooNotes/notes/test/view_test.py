@@ -12,8 +12,7 @@ class TestNote:
         note = {
             "title": "Ten",
             "description": "Science fiction animation",
-            "created_at": "1890-01-20",
-            "user_id_id": 4
+            # "user_id_id": 4
         }
         print(url)
         response = client.post(url, note)
