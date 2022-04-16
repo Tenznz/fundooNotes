@@ -12,3 +12,14 @@ class Note(models.Model):
     archive = models.BooleanField(default=False, blank=True)
     is_deleted = models.BooleanField(default=False, blank=True)
 
+    def __str__(self):
+        return self.title
+
+
+class Label(models.Model):
+    name = models.CharField(max_length=50)
+    color = models.CharField(max_length=50)
+    note = models.ManyToManyField(Note)
+
+    def __str__(self):
+        return self.name

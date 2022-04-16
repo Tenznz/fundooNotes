@@ -8,11 +8,11 @@ from rest_framework.generics import RetrieveUpdateDestroyAPIView
 # import RetrieveUpdateDestroyAPIView
 from rest_framework.response import Response
 from django.http import JsonResponse
-from .models import Note
+from .models import Note, Label
 from .serializers import NoteSerializer
 from django.http import JsonResponse
 from django.core.mail import send_mail
-from .utils import verify_token, RedisOperation,delete_verify_token
+from .utils import verify_token, RedisOperation
 from rest_framework.exceptions import ValidationError
 
 logging.basicConfig(filename="views.log", filemode="w")
@@ -56,7 +56,7 @@ class Notes(APIView):
                     "message": "Data not stored"
                 },
                 status=status.HTTP_400_BAD_REQUEST)
-        
+
     @verify_token
     def get(self, request):
         """
@@ -80,8 +80,7 @@ class Notes(APIView):
                 "message": "user not found",
             }, status=status.HTTP_400_BAD_REQUEST)
 
-
-    @delete_verify_token
+    @verify_token
     def delete(self, request, note_id):
         """
             delete note of user
@@ -136,3 +135,31 @@ class Notes(APIView):
                     "message": "Data not updated"
                 },
                 status=status.HTTP_400_BAD_REQUEST)
+
+
+class Labels(APIView):
+    """label to the notes"""
+
+    def post(self, request):
+        request_data = request.data
+        # note_id=request_data.get('note_id')
+        print(type(request_data))
+        label = Label(name=request.data.get('label_name'), color=request.data.get('color'))
+        label.save()
+        print(label)
+        label.note.add(request_data.get('note_id'))
+        print(label.note.all())
+        return Response({
+            "message": "data"
+        })
+
+    def get(self, request):
+        request_data = request.data
+        label_name = request_data.get("label_name")
+        label_data = Label.objects.get(name=label_name)
+        note_data = label_data.note.all()
+        print(note_data)
+
+        return Response({
+            "message": note_data.__str__()
+        })
