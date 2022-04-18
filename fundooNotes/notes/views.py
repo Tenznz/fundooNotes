@@ -34,7 +34,6 @@ class Notes(APIView):
         try:
             serializer.is_valid(raise_exception=True)
             serializer.save()
-            print("reached post")
             return Response(
                 {
                     "message": "Data store successfully",
@@ -66,11 +65,9 @@ class Notes(APIView):
         """
         user_id = request.data.get("id")
         try:
-            print("data from db")
-            # note = Note.objects.filter(user_id=user_id)
             note = Note.objects.filter(user_id=user_id).order_by("-id")
             serializer = NoteSerializer(note, many=True)
-            print(serializer.data)
+            print(type(serializer.data))
             return Response({
                 "message": "user found",
                 "data": serializer.data
@@ -117,7 +114,6 @@ class Notes(APIView):
             note = Note.objects.get(pk=request.data["note_id"])
             print(note)
             serializer = NoteSerializer(note, data=data)
-
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(
@@ -141,25 +137,46 @@ class Labels(APIView):
     """label to the notes"""
 
     def post(self, request):
-        request_data = request.data
-        # note_id=request_data.get('note_id')
-        print(type(request_data))
-        label = Label(name=request.data.get('label_name'), color=request.data.get('color'))
-        label.save()
-        print(label)
-        label.note.add(request_data.get('note_id'))
-        print(label.note.all())
-        return Response({
-            "message": "data"
-        })
+        try:
+            request_data = request.data
+            note_id = request_data.get('note_id')
+            label = Label.objects.filter(name=request.data.get('label_name'))
+            if len(label) == 1:
+                label = Label.objects.get(name=request.data.get('label_name'))
+            else:
+                label = Label(name=request.data.get('label_name'), color=request.data.get('color'))
+                label.save()
+                print(label)
+            label.note.add(note_id)
+            return Response({
+                "message": "label added successfully"
+            })
+        except Exception as e:
+            logging.error(e)
+            return Response({
+                "error_message": str(e)
+            })
 
     def get(self, request):
-        request_data = request.data
-        label_name = request_data.get("label_name")
-        label_data = Label.objects.get(name=label_name)
-        note_data = label_data.note.all()
-        print(note_data)
+        try:
+            request_data = request.data
+            label_name = request_data.get("label_name")
+            label_data = Label.objects.get(name=label_name)
+            note_data = label_data.note.all()
+            return Response({
+                "label_name": label_name,
+                "notes list": [x.get_format() for x in note_data]
+            })
+        except Exception as e:
+            logging.error(e)
+            return Response({
+                "error_message": str(e)
+            })
 
+    def delete(self, request):
+        request_data = request.data
+        label = Label.objects.get(name=request_data.get("label_name"))
+        label.delete()
         return Response({
-            "message": note_data.__str__()
+            "message": "label delete successfully"
         })

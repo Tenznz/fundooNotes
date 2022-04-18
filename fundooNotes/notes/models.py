@@ -12,6 +12,12 @@ class Note(models.Model):
     archive = models.BooleanField(default=False, blank=True)
     is_deleted = models.BooleanField(default=False, blank=True)
 
+    def get_format(self):
+        return {
+            "title": self.title,
+            "description": self.description
+        }
+
     def __str__(self):
         return self.title
 
