@@ -4,15 +4,13 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.views import APIView
-from rest_framework.generics import RetrieveUpdateDestroyAPIView
-# import RetrieveUpdateDestroyAPIView
 from rest_framework.response import Response
 from django.http import JsonResponse
 from .models import Note, Label
 from .serializers import NoteSerializer
 from django.http import JsonResponse
 from django.core.mail import send_mail
-from .utils import verify_token, RedisOperation
+from .utils import verify_token, get_note_format
 from rest_framework.exceptions import ValidationError
 
 logging.basicConfig(filename="views.log", filemode="w")
@@ -65,16 +63,14 @@ class Notes(APIView):
         """
         user_id = request.data.get("id")
         try:
-            note = Note.objects.filter(user_id=user_id).order_by("-id")
-            serializer = NoteSerializer(note, many=True)
-            print(type(serializer.data))
+            notes = Note.objects.filter(user_id=user_id).order_by("-id")
             return Response({
                 "message": "user found",
-                "data": serializer.data
+                "data": get_note_format(notes)
             }, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({
-                "message": "user not found",
+                "message": str(e),
             }, status=status.HTTP_400_BAD_REQUEST)
 
     @verify_token
@@ -91,7 +87,7 @@ class Notes(APIView):
             note.delete()
             return Response({
                 "message": "user delete successfully"
-            }, status=status.HTTP_201_CREATED)
+            }, status=status.HTTP_204_NO_CONTENT)
         except Exception as e:
             logging.error(e)
             print("reach Exception")
@@ -118,7 +114,7 @@ class Notes(APIView):
             serializer.save()
             return Response(
                 {
-                    "message": "user update successfully",
+                    "message": "note update successfully",
                     "data": serializer.data
                 },
                 status=status.HTTP_204_NO_CONTENT
@@ -128,7 +124,7 @@ class Notes(APIView):
             print(e)
             return Response(
                 {
-                    "message": "Data not updated"
+                    "error_message": str(e)
                 },
                 status=status.HTTP_400_BAD_REQUEST)
 
@@ -150,12 +146,12 @@ class Labels(APIView):
             label.note.add(note_id)
             return Response({
                 "message": "label added successfully"
-            })
+            }, status=status.HTTP_201_CREATED)
         except Exception as e:
             logging.error(e)
             return Response({
                 "error_message": str(e)
-            })
+            }, status=status.HTTP_400_BAD_REQUEST)
 
     def get(self, request):
         try:
@@ -163,20 +159,28 @@ class Labels(APIView):
             label_name = request_data.get("label_name")
             label_data = Label.objects.get(name=label_name)
             note_data = label_data.note.all()
+            note = Note.objects.filter(user_id=request_data["user_id"])
+            print(note.note.all())
             return Response({
                 "label_name": label_name,
                 "notes list": [x.get_format() for x in note_data]
-            })
+            }, status=status.HTTP_200_OK)
         except Exception as e:
             logging.error(e)
             return Response({
                 "error_message": str(e)
-            })
+            }, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request):
-        request_data = request.data
-        label = Label.objects.get(name=request_data.get("label_name"))
-        label.delete()
-        return Response({
-            "message": "label delete successfully"
-        })
+        try:
+            request_data = request.data
+            label = Label.objects.get(name=request_data.get("label_name"))
+            label.delete()
+            return Response({
+                "message": "label delete successfully"
+            }, status=status.HTTP_204_NO_CONTENT)
+        except Exception as e:
+            logging.error(e)
+            return Response({
+                "error_message": str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)

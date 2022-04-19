@@ -29,3 +29,9 @@ class Label(models.Model):
 
     def __str__(self):
         return self.name
+
+    def get_label(self):
+        return {
+            "name": self.name,
+            "color": self.color
+        }
