@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from notes.models import Note
+from notes.models import Note, Label
 
 
 class NoteSerializer(serializers.ModelSerializer):
@@ -26,3 +26,10 @@ class NoteSerializer(serializers.ModelSerializer):
         )
         print("notes")
         return notes
+
+
+class LabelSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Label
+        fields = ['id','name','color']

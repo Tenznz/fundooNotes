@@ -3,7 +3,7 @@ import json
 from rest_framework.response import Response
 from user.utils import EncodeDecodeToken
 from .redis import RedisCode
-from .serializers import NoteSerializer
+from .serializers import NoteSerializer, LabelSerializer
 
 logging.basicConfig(filename="views.log", filemode="w")
 
@@ -31,7 +31,6 @@ def get_note_format(note_data):
     note_list = []
     for note in note_data:
         note_labels = note.label_set.all()
-        print(note_labels)
         note_list.append({
             "note_id": note.id,
             "title": note.title,
@@ -40,7 +39,7 @@ def get_note_format(note_data):
             "color": note.color,
             "archive": note.archive,
             "is_deleted": note.is_deleted,
-            "label_list": [label.get_label() for label in note_labels]
+            "label_list": LabelSerializer(note_labels, many=True).data
         })
 
     return note_list
