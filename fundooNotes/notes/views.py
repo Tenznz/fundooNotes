@@ -1,18 +1,10 @@
 import logging
-import json
-from drf_yasg import openapi
-from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.views import APIView
-from rest_framework.generics import RetrieveUpdateDestroyAPIView
-# import RetrieveUpdateDestroyAPIView
 from rest_framework.response import Response
-from django.http import JsonResponse
 from .models import Note
 from .serializers import NoteSerializer
-from django.http import JsonResponse
-from django.core.mail import send_mail
-from .utils import verify_token, RedisOperation,delete_verify_token
+from .utils import verify_token
 from rest_framework.exceptions import ValidationError
 
 logging.basicConfig(filename="views.log", filemode="w")
@@ -34,7 +26,6 @@ class Notes(APIView):
         try:
             serializer.is_valid(raise_exception=True)
             serializer.save()
-            print("reached post")
             return Response(
                 {
                     "message": "Data store successfully",
@@ -53,10 +44,10 @@ class Notes(APIView):
             logging.error(e)
             return Response(
                 {
-                    "message": "Data not stored"
+                    "message": str(e)
                 },
                 status=status.HTTP_400_BAD_REQUEST)
-        
+
     @verify_token
     def get(self, request):
         """
@@ -66,22 +57,18 @@ class Notes(APIView):
         """
         user_id = request.data.get("id")
         try:
-            print("data from db")
-            # note = Note.objects.filter(user_id=user_id)
             note = Note.objects.filter(user_id=user_id).order_by("-id")
             serializer = NoteSerializer(note, many=True)
-            print(serializer.data)
             return Response({
                 "message": "user found",
                 "data": serializer.data
             }, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({
-                "message": "user not found",
+                "message": str(e),
             }, status=status.HTTP_400_BAD_REQUEST)
 
-
-    @delete_verify_token
+    @verify_token
     def delete(self, request, note_id):
         """
             delete note of user
@@ -91,7 +78,6 @@ class Notes(APIView):
             """
         try:
             note = Note.objects.get(pk=note_id)
-            print(note)
             note.delete()
             return Response({
                 "message": "user delete successfully"
@@ -116,9 +102,7 @@ class Notes(APIView):
             data = request.data
             data["user_id"] = request.data.get("id")
             note = Note.objects.get(pk=request.data["note_id"])
-            print(note)
             serializer = NoteSerializer(note, data=data)
-
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(
@@ -133,6 +117,6 @@ class Notes(APIView):
             print(e)
             return Response(
                 {
-                    "message": "Data not updated"
+                    "message": str(e)
                 },
                 status=status.HTTP_400_BAD_REQUEST)
