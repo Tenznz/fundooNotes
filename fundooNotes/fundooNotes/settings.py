@@ -77,7 +77,7 @@ WSGI_APPLICATION = 'fundooNotes.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'testdatabase',
+        'NAME': 'user_demo',
         'USER': 'postgres',
         'PASSWORD': '1234',
         'HOST': 'localhost',
