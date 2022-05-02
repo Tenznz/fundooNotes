@@ -1,59 +1,77 @@
-import json
 import logging
 
 from django.contrib.auth.models import auth
-from django.http import JsonResponse
 from rest_framework.response import Response
+from rest_framework.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist
 from user.models import User
 from user.serializers import UserSerializer
 from rest_framework.views import APIView
-from rest_framework.parsers import JSONParser
 
 logging.basicConfig(filename="views.log", filemode="w")
 
 
 class UserRegistration(APIView):
     def post(self, request):
-        data = JSONParser().parse(request)
-        serializer = UserSerializer(data=data)
+        serializer = UserSerializer(data=request.data)
         try:
-            if serializer.is_valid(raise_exception=True):
-                user = User.objects.create_user(username=serializer.data['username'],
-                                                first_name=serializer.data['first_name'],
-                                                last_name=serializer.data['last_name'],
-                                                password=serializer.data['password'],
-                                                age=serializer.data['age'],
-                                                email=serializer.data['email'],
-                                                phone=serializer.data['phone'])
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            print(serializer.data)
 
-                user.save()
-                return Response({"message": "data store successfully",
-                                 "data": {"username": serializer.data}})
+            return Response({
+                "message": "data store successfully",
+                "data": serializer.data
+            }, 201)
+
+        except ValidationError:
+            return Response({
+                'message': serializer.errors
+            }, 400)
 
         except Exception as e:
             logging.error(e)
-            return JsonResponse(serializer.errors)
+            return Response({
+                'message': str(e)
+            }, 400)
 
     def get(self, request):
-        user = User.objects.all()
-        serializer = UserSerializer(user, many=True)
-        return JsonResponse(serializer.data, safe=False)
+        try:
+            users = User.objects.get(username=request.data.get("username"))
+            serializer = UserSerializer(users)
+            print(serializer.data)
+            return Response({
+                "message": "user found",
+                "data": serializer.data
+            })
+        except ObjectDoesNotExist:
+            return Response({
+                "message": "user not found"
+            }, 400)
+
+        except Exception as e:
+            return Response({
+                "error_message": str(e)
+            }, 400)
 
 
 class UserLogin(APIView):
 
     def post(self, request):
         try:
-            username = request.data.get("username")
-            password = request.data.get("password")
-            user = auth.authenticate(username=username, password=password)
+            user = auth.authenticate(username=request.data.get("username"), password=request.data.get("password"))
             print(user)
             if user is not None:
                 serializer = UserSerializer(user)
-                return Response({"message": "login successfully", "data": serializer.data["username"]})
-                # return Response({"message": "user login successful", "data": username})
-            else:
-                return JsonResponse({"message": "user login unsuccessful"})
+                return Response({
+                    "message": "login successfully",
+                    "data": serializer.data
+                })
+            return Response({
+                "message": "user login unsuccessful"
+            }, 400)
         except Exception as e:
             logging.error(e)
-            return JsonResponse({"message": "login unsuccessful"})
+            return Response({
+                "error_message": str(e)
+            }, 400)
