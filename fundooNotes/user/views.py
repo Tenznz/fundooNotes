@@ -11,10 +11,14 @@ from rest_framework.response import Response
 from user.models import User
 from user.serializers import UserSerializer
 from rest_framework.views import APIView
-from .utils import EncodeDecodeToken
+from .utils import EncodeDecodeToken, dictfetchall
 from rest_framework import status
 from user.task import send_email_task
 from user.email import Email
+from django.db import connection
+from datetime import datetime
+
+cursor = connection.cursor()
 
 logging.basicConfig(filename="views.log", filemode="w")
 
@@ -42,35 +46,30 @@ class UserRegistration(APIView):
         :param request: user_details
         :return:response
         """
-        serializer = UserSerializer(data=request.data)
         try:
-            serializer.is_valid(raise_exception=True)
-            # data = f"'{serializer.data['username']}','{serializer.data['first_name']}'," \
-            #        f"'{serializer.data['last_name']}'," \
-            #        f"'{serializer.data['password']}',{serializer.data['age']},'{serializer.data['email']}'," \
-            #        f"'{serializer.data['phone']}',{serializer.data['is_verified']} "
-            # user = User.objects.raw(f"INSERT INTO user_user(username,first_name,last_name,password,age,email,phone,"
-            #                         f"is_verified) VALUES ({data});")
-            user = serializer.create(validated_data=serializer.data)
-            token = EncodeDecodeToken.encode_token(payload=user.pk)
-            print(token)
+            cursor.execute('INSERT into user_user (username,first_name,last_name,password,age,email,phone,'
+                           'is_superuser,is_staff,is_active,date_joined,is_verified) values ( '
+                           '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',
+                           [request.data.get('username'), request.data.get('first_name'),
+                            request.data.get('last_name'), request.data.get('password'), request.data.get('age'),
+                            request.data.get('email'), request.data.get('phone'), False, False, True,
+                            datetime.now(), False
+                            ])
+            cursor.execute("select username,first_name,last_name,password,age,email,phone from user_user where "
+                           "username=%s", [request.data.get("username")])
             return Response(
                 {
                     "message": "data store successfully",
-                    "data": serializer.data
+                    "data": dictfetchall(cursor)
                 },
                 status=status.HTTP_201_CREATED)
-
-        except ValidationError as e:
-            logging.error(e)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         except Exception as e:
             logging.error(e)
             print(e)
             return Response(
                 {
-                    "message": "data storing failed"
+                    "message": str(e)
                 },
                 status=status.HTTP_400_BAD_REQUEST)
 
@@ -122,7 +121,10 @@ class UserLogin(APIView):
                     {
                         "message": "login successfully", "data": token
                     },
-                    status=status.HTTP_201_CREATED)
+                    status=status.HTTP_200_OK)
+            return Response({
+                'message': 'login unsuccessful'
+            })
 
         except Exception as e:
             logging.error(e)

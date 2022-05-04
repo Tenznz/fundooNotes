@@ -101,7 +101,7 @@ class Notes(APIView):
             print(note)
             return Response({
                 "message": "user delete successfully"
-            }, status=status.HTTP_201_CREATED)
+            }, 204)
         except Exception as e:
             logging.error(e)
             print(e)
@@ -139,17 +139,14 @@ class Notes(APIView):
                                      request.data.get('note_id')])
             print(note)
             serializer = NoteSerializer(note, data=data)
-            # # NoteSerializer(note, data=data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
-            # RedisOperation().update_note(serializer.data)
-            # note.save()
             return Response(
                 {
                     "message": "user update successfully",
                     # "data": serializer.data
                 },
-                status=status.HTTP_201_CREATED
+                status=status.HTTP_200_OK
             )
         except Exception as e:
             logging.error(e)
