@@ -2,42 +2,35 @@ import json
 import logging
 
 from django.contrib.auth.models import auth
-from django.http import JsonResponse
 from rest_framework.response import Response
 from user.models import User
 from user.serializers import UserSerializer
 from rest_framework.views import APIView
-from rest_framework.parsers import JSONParser
+from rest_framework.exceptions import ValidationError
 
 logging.basicConfig(filename="views.log", filemode="w")
 
 
 class UserRegistration(APIView):
     def post(self, request):
-        # data = JSONParser().parse(request)
         serializer = UserSerializer(data=request.data)
         try:
-            if serializer.is_valid(raise_exception=True):
-                user = User.objects.create_user(username=serializer.data['username'],
-                                                first_name=serializer.data['first_name'],
-                                                last_name=serializer.data['last_name'],
-                                                password=serializer.data['password'],
-                                                age=serializer.data['age'],
-                                                email=serializer.data['email'],
-                                                phone=serializer.data['phone'])
-
-                user.save()
-                return Response({"message": "data store successfully",
-                                 "data": {"username": serializer.data}})
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response({
+                "message": "user store successfully",
+                "data": serializer.data
+            }, 201)
+        except ValidationError:
+            return Response({
+                "message": serializer.error,
+            }, 400)
 
         except Exception as e:
             logging.error(e)
-            return JsonResponse(serializer.errors)
-
-    def get(self, request):
-        user = User.objects.all()
-        serializer = UserSerializer(user, many=True)
-        return JsonResponse(serializer.data, safe=False)
+            return Response({
+                "message": str(e),
+            }, 400)
 
 
 class UserLogin(APIView):
@@ -50,10 +43,14 @@ class UserLogin(APIView):
             print(user)
             if user is not None:
                 serializer = UserSerializer(user)
-                return Response({"message": "login successfully", "data": serializer.data["username"]})
-                # return Response({"message": "user login successful", "data": username})
-            else:
-                return JsonResponse({"message": "user login unsuccessful"})
+                return Response({
+                    "message": "login successfully",
+                    "data": serializer.data}, 200)
+            return Response({
+                "message": "login unsuccessful"
+            }, 400)
         except Exception as e:
             logging.error(e)
-            return JsonResponse({"message": "login unsuccessful"})
+            return Response({
+                "message": str(e)
+            }, 400)

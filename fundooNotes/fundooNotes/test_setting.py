@@ -9,4 +9,5 @@ DATABASES = {
         'HOST': 'localhost',
     }
 }
+AUTH_USER_MODEL = "user.User"
 # EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'

@@ -9,20 +9,9 @@ pytestmark = pytest.mark.django_db
 
 
 class TestUser:
-    # @pytest.mark.django_db
-    # def setUp(self):
-    #     self.user = User.objects.create_user(username='Ten', first_name="Ten", last_name="Duk", password='Duk',
-    #                                          email='duk@gmail,com',
-    #                                          phone='9191919191', is_verified='True', age=20)
-
-    # @pytest.mark.django_db
-    # def setUp(self):
-    # self.client = Client()
-    # self.user = get_user_model().objects.create_user(
-    #     username='Ten', password='Duk', email='duk@gmail,com', phone='9191919191', is_verified='True', age=20)
 
     @pytest.mark.django_db
-    def test_user(self, client):
+    def test_user_signup(self, client):
         url = reverse("registration")
         user = {
             "username": "Tenzin",
@@ -37,10 +26,10 @@ class TestUser:
         print(url)
         response = client.post(url, user)
         print(response.content)
-        assert response.status_code == 200
+        assert response.status_code == 201
 
     @pytest.mark.django_db
-    def testlogin(self, client):
+    def test_user_login(self, client):
         user = User.objects.create_user(username="Tenzin",
                                         first_name="Ten",
                                         last_name="duk",
@@ -58,10 +47,11 @@ class TestUser:
         url = reverse("login")
         response = client.post(url, data)
         assert response.status_code == 200
-    # @pytest.mark.django_db
-    # def test_login(self, client):
-    #     url = reverse('login')
-    #     login_data = {'username': 'Ten', 'password': 'Duk'}
-    #     respone = client.post(url, login_data,)
-    #
-    #     assert respone.status_code == 201
+
+    @pytest.mark.django_db
+    def test_login_fail(self, client):
+        url = reverse('login')
+        login_data = {'username': 'Ten', 'password': 'Duk'}
+        respone = client.post(url, login_data)
+
+        assert respone.status_code == 400

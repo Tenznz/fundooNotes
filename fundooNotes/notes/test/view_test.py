@@ -7,20 +7,24 @@ pytestmark = pytest.mark.django_db
 
 class TestNote:
     @pytest.mark.django_db
-    def test_user(self, client):
+    def test_add_note(self, client):
         url = reverse("note")
         note = {
-            "title": "Ten",
-            "description": "Science fiction animation",
-            "created_at": "1890-01-20",
-            "user_id_id": 4
+            "title": "mynote",
+            "description": "this is my notes",
+            "user_id": 264
         }
-        print(url)
         response = client.post(url, note)
         print(response.content)
+        assert response.status_code == 201
+
+    @pytest.mark.django_db
+    def test_get_note(self, client):
+        url = reverse("note")
+        note = {
+            "note_id": 4,
+        }
+        print(url)
+        response = client.get(url, note)
+        print(response.content)
         assert response.status_code == 200
-
-    # @pytest.mark.django_db
-    # def update(self):
-    #     = reverse("note")
-
