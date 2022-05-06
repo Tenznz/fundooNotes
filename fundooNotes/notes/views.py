@@ -1,4 +1,5 @@
 import logging
+import json
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -31,22 +32,26 @@ class Notes(APIView):
             logging.error(e)
             return Response({'message': str(e)}, 400)
 
-    def get(self, request):
+    def get(self, request, id):
         try:
-            note = Note.objects.filter(user_id_id=request.data.get("user_id"))
-            serializer = NoteSerializer(note, many=True)
+            note = Note.objects.filter(user_id_id=id)
+            if len(note) != 0:
+                serializer = NoteSerializer(note, many=True)
+                return Response({
+                    "message": "note found",
+                    "data": serializer.data
+                }, 200)
             return Response({
-                "message": "note found",
-                "data": serializer.data
+                "message": "empty note"
             }, 200)
         except Exception as e:
             return Response({
                 'message': str(e)
             }, 400)
 
-    def delete(self, request):
+    def delete(self, request, id):
         try:
-            Note.objects.get(id=request.data.get("note_id")).delete()
+            Note.objects.get(id=id).delete()
             return Response({
                 "message": "note delete successfully",
             }, 204)

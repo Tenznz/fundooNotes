@@ -37,12 +37,10 @@ class UserLogin(APIView):
 
     def post(self, request):
         try:
-            username = request.data.get("username")
-            password = request.data.get("password")
-            user = auth.authenticate(username=username, password=password)
-            print(user)
+            user = auth.authenticate(username=request.data.get("username"), password=request.data.get("password"))
             if user is not None:
                 serializer = UserSerializer(user)
+                
                 return Response({
                     "message": "login successfully",
                     "data": serializer.data}, 200)
