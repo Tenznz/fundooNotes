@@ -45,9 +45,6 @@ INSTALLED_APPS = [
     'rest_framework',
     'user',
     'notes',
-    'django_celery_results',
-    'drf_yasg',
-
 ]
 
 AUTH_USER_MODEL = "user.User"
@@ -60,7 +57,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'fundooNotes.middleware.CustomMiddleware'
+    # 'fundooNotes.middleware.CustomMiddleware'
 ]
 
 ROOT_URLCONF = 'fundooNotes.urls'

@@ -9,4 +9,4 @@ DATABASES = {
         'HOST': 'localhost',
     }
 }
-# EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
+USE_TZ = False

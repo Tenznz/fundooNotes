@@ -9,16 +9,19 @@ logging.basicConfig(filename="views.log", filemode="w")
 
 
 def verify_token(function):
-    def wrapper(self, request):
-        if 'HTTP_TOKEN' not in request.META:
+    def wrapper(self, request, pk=None):
+        if 'HTTP_AUTHORIZATION' not in request.META:
             resp = Response({'message': 'Token not provided in the header'})
-            resp.status_code = 400
+            resp.status_code = 401
             logging.info('Token not provided in the header')
             return resp
-        token = request.META['HTTP_TOKEN']
+        token = request.META['HTTP_AUTHORIZATION']
         id = EncodeDecodeToken.decode_token(token)
-        request.data.update({'id': id.get("id")})
-        return function(self, request)
+        request.data.update({'user_id': id.get("id")})
+        if pk is None:
+            return function(self, request)
+        else:
+            return function(self, request, pk)
 
     return wrapper
 
