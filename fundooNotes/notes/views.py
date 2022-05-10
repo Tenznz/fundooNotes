@@ -37,6 +37,7 @@ class Notes(APIView):
             note = Note.objects.filter(user_id_id=id)
             if len(note) != 0:
                 serializer = NoteSerializer(note, many=True)
+
                 return Response({
                     "message": "note found",
                     "data": serializer.data
