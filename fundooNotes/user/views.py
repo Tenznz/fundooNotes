@@ -1,11 +1,8 @@
-import json
 import logging
-import jwt
 
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.exceptions import ValidationError
-from django.http import HttpResponse
 from django.contrib.auth.models import auth
 from rest_framework.response import Response
 from user.models import User
@@ -13,7 +10,6 @@ from user.serializers import UserSerializer
 from rest_framework.views import APIView
 from .utils import EncodeDecodeToken
 from rest_framework import status
-from user.task import send_email_task
 from user.email import Email
 
 logging.basicConfig(filename="views.log", filemode="w")
@@ -45,16 +41,8 @@ class UserRegistration(APIView):
         serializer = UserSerializer(data=request.data)
         try:
             serializer.is_valid(raise_exception=True)
-            user = User.objects.create_user(username=serializer.data['username'],
-                                            first_name=serializer.data['first_name'],
-                                            last_name=serializer.data['last_name'],
-                                            password=serializer.data['password'],
-                                            age=serializer.data['age'],
-                                            email=serializer.data['email'],
-                                            phone=serializer.data['phone'])
-
-            token = EncodeDecodeToken.encode_token(payload=user.pk)
-            print(token)
+            serializer.save()
+            Email().send_email(serializer.data)
             return Response(
                 {
                     "message": "data store successfully",
@@ -71,7 +59,7 @@ class UserRegistration(APIView):
             print(e)
             return Response(
                 {
-                    "message": "data storing failed"
+                    "message": str(e)
                 },
                 status=status.HTTP_400_BAD_REQUEST)
 
@@ -120,15 +108,18 @@ class UserLogin(APIView):
                 token = EncodeDecodeToken.encode_token(payload=user.pk)
                 return Response(
                     {
-                        "message": "login successfully", "data": token
+                        "message": "login successfully", "token": token
                     },
-                    status=status.HTTP_201_CREATED)
+                    status=status.HTTP_200_OK)
+            return Response({
+                'message': 'login unsuccessful'
+            },400)
 
         except Exception as e:
             logging.error(e)
             return Response(
                 {
-                    "message": "user login unsuccessful"
+                    "message": str(e)
                 },
                 status=status.HTTP_400_BAD_REQUEST)
 
@@ -155,4 +146,4 @@ class ValidateToken(APIView):
                             status=status.HTTP_201_CREATED)
         except Exception as e:
             logging.error(e)
-            return HttpResponse(e,status=status.HTTP_400_BAD_REQUEST)
+            return Response(e,status=status.HTTP_400_BAD_REQUEST)
