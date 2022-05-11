@@ -1,4 +1,3 @@
-from datetime import datetime
 from rest_framework import serializers
 from .models import Note
 
@@ -9,16 +8,5 @@ class NoteSerializer(serializers.ModelSerializer):
         model = Note
         fields = "__all__"
 
-    def create(self, validate_data):
-        """
-        for creating the user
-        :param validate_data: validating the api data
-        :return:notes
-        """
-        notes = Note.objects.create(
-            title=validate_data.get("title"),
-            description=validate_data.get("description"),
-            user_id=validate_data.get("user_id")
-        )
-        return notes
+
 
