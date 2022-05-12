@@ -21,18 +21,18 @@ class RedisCode:
         """
         return self.cache.set(key, value)
 
-    def put(self, key, value):
-        """
-        for updating in the cache
-        :param key: key as user_id
-        :param value: value will be note data
-        """
-        return self.cache.set(key, value)
-
-    def delete(self, key):
-        """
-        for deleting in cache
-        :param key
-        :return
-        """
-        return self.cache.delete(key)
+    # def put(self, key, value):
+    #     """
+    #     for updating in the cache
+    #     :param key: key as user_id
+    #     :param value: value will be note data
+    #     """
+    #     return self.cache.set(key, value)
+    #
+    # def delete(self, key):
+    #     """
+    #     for deleting in cache
+    #     :param key
+    #     :return
+    #     """
+    #     return self.cache.delete(key)

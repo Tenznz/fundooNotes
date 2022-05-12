@@ -7,20 +7,15 @@ pytestmark = pytest.mark.django_db
 
 class TestNote:
     @pytest.mark.django_db
-    def test_user(self, client):
+    def test_note_fail(self, client):
         url = reverse("note")
         note = {
             "title": "Ten",
-            "description": "Science fiction animation",
-            "created_at": "1890-01-20",
-            "user_id_id": 4
+            "description": "Science fiction animation"
         }
         print(url)
-        response = client.post(url, note)
+        response = client.post(path=url, data=note,content_type="application/json",
+                               HTTP_AUTHORIZATION='eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MX0'
+                                                  '.-xXA0iKB4mVNvWLYFtt2xNiYkFpObF54J9lj2RwduAI')
         print(response.content)
-        assert response.status_code == 200
-
-    # @pytest.mark.django_db
-    # def update(self):
-    #     = reverse("note")
-
+        assert response.status_code == 400

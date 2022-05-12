@@ -3,5 +3,5 @@ from notes import views
 
 urlpatterns = [
     path('note', views.Notes.as_view(), name='note'),
-    # path('notes', views.note_list)
+    path('note/<int:pk>', views.Notes.as_view(), name='note_delete'),
 ]

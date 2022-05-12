@@ -9,20 +9,15 @@ logging.basicConfig(filename="views.log", filemode="w")
 
 
 def verify_token(function):
-    def wrapper(self, request):
-        # print(request.META)
+    def wrapper(self, request, *args, **kwargs):
         if 'HTTP_AUTHORIZATION' not in request.META:
-            resp = JsonResponse({'message': 'Token not provided in the header'})
+            resp = Response({'message': 'Authentication problem'})
             resp.status_code = 400
-            logger.info('Token not provided in the header')
             return resp
         token = request.META['HTTP_AUTHORIZATION']
-        encode = token.split(" ")
-        # print(encode[1])
-        id = EncodeDecodeToken.decode_token(encode[1])
-        print(id)
-        request.data.update({'id': id.get("id")})
-        return function(self, request)
+        id = EncodeDecodeToken.decode_token(token)
+        request.data.update({'user_id': id.get("id")})
+        return function(self, request, *args, **kwargs)
 
     return wrapper
 
@@ -43,7 +38,6 @@ class RedisOperation:
             data = self.redis_obj.get(user_id)
             if data is None:
                 return None
-            # print(type(json.loads(data)))
             return json.loads(data)
         except Exception as e:
             logging.error(e)
@@ -58,24 +52,13 @@ class RedisOperation:
         """
         try:
             print("data added to redis server")
-            # print(type(note))
-            # print(user_id)
             existing_note = self.get_note(user_id)
-            print("existing", existing_note)
-            dict_data = {user_id: existing_note}
-            print("dict_dat", dict_data)
-            print(existing_note)
             if existing_note is None:
-                # print(json.loads(note))
-                new_note = {int(note.get('id')): note}
-
-                dict_data[user_id] = new_note
-                self.redis_obj.set(user_id, json.dumps(dict_data[user_id]))
+                note_data = {int(note.get('id')): note}
             else:
                 new_note = {int(note.get('id')): note}
-                added_note = {**existing_note, **new_note}
-                self.redis_obj.set(user_id, json.dumps(added_note))
-            logging.error(e)
+                note_data = {**existing_note, **new_note}
+            self.redis_obj.set(user_id, json.dumps(note_data))
         except Exception as e:
             logging.error(e)
 
@@ -90,13 +73,11 @@ class RedisOperation:
         print("data delete to redis server")
         try:
             note_list = json.loads(self.redis_obj.get(user_id))
-            print(note_list)
             if note_list.get(str(note_id)):
                 note_list.pop(str(note_id))
-                self.redis_obj.put(user_id, json.dumps(note_list))
+                self.redis_obj.set(user_id, json.dumps(note_list))
         except Exception as e:
             logging.error(e)
-            raise e
 
     def update_note(self, note):
         """
@@ -107,9 +88,7 @@ class RedisOperation:
         try:
             user_id = note.get('user_id')
             id = str(note.get("id"))
-            print(user_id)
             note_dict = json.loads(self.redis_obj.get(user_id))
-            # print(note_dict.get(id))
 
             if note_dict.get(id):
                 note_dict.update({id: note})
