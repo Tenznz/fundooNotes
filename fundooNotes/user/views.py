@@ -13,7 +13,6 @@ from rest_framework.views import APIView
 from .utils import EncodeDecodeToken
 from rest_framework import status
 from user.task import send_email_task
-# import user.task
 from user.email import Email
 
 logging.basicConfig(filename="views.log", filemode="w")
@@ -24,39 +23,34 @@ class UserRegistration(APIView):
         serializer = UserSerializer(data=request.data)
         try:
             serializer.is_valid(raise_exception=True)
-            user = User.objects.create_user(username=serializer.data['username'],
-                                            first_name=serializer.data['first_name'],
-                                            last_name=serializer.data['last_name'],
-                                            password=serializer.data['password'],
-                                            age=serializer.data['age'],
-                                            email=serializer.data['email'],
-                                            phone=serializer.data['phone'])
+            serializer.save()
 
-            token = EncodeDecodeToken.encode_token(payload=user.pk)
-            print(token)
+            token = EncodeDecodeToken.encode_token(payload=serializer.data['id'])
             send_email_task.delay(email=serializer.data["email"], token=str(token))
-            # sendemailtask.delay()
-            # # Email().send_email(token, serializer.data["email"])
-            return Response({"message": "data store successfully",
-                             "data": {"username": serializer.data}})
+            return Response({
+                "message": "data store successfully",
+                "data": serializer.data
+            }, 201)
 
         except ValidationError as e:
             logging.error(e)
-            return Response(serializer.errors)
+            return Response({
+                'message': serializer.errors
+            }, 400)
 
         except Exception as e:
             logging.error(e)
             print(e)
             return Response(
                 {
-                    "message": "data storing failed"
+                    "message": str(e)
                 },
                 status=status.HTTP_400_BAD_REQUEST)
 
     def get(self, request):
         user = User.objects.all()
         serializer = UserSerializer(user, many=True)
-        return JsonResponse(serializer.data, safe=False)
+        return Response({data:serializer.data}, 200)
 
 
 class UserLogin(APIView):
@@ -71,10 +65,13 @@ class UserLogin(APIView):
                 UserSerializer(user)
                 token = EncodeDecodeToken.encode_token(payload=user.pk)
 
-                return Response({"message": "login successfully", "data": token})
-                # return Response({"message": "user login successful", "data": username})
-            else:
-                return JsonResponse({"message": "user login unsuccessful"})
+                return Response({
+                    "message": "login successfully",
+                    "data": token
+                }, 200)
+            return Response({
+                "message": "user login unsuccessful"
+            }, 400)
         except Exception as e:
             logging.error(e)
             return JsonResponse({"message": "login unsuccessful"})
@@ -83,14 +80,16 @@ class UserLogin(APIView):
 class ValidateToken(APIView):
     def get(self, request, token):
         try:
-            # print(token)
             decoded_token = EncodeDecodeToken.decode_token(token=token)
-            # print(decoded_token)
             user = User.objects.get(id=decoded_token.get('id'))
             user.is_verified = True
             serializer = UserSerializer(user)
-            return Response({"message": "Validation Successfully", "data": serializer.data},
-                            status=status.HTTP_201_CREATED)
+            return Response({
+                "message": "Validation Successfully",
+                "data": serializer.data
+            }, status=status.HTTP_200_OK)
         except Exception as e:
             logging.error(e)
-            return HttpResponse(e)
+            return Response({
+                "message": str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
