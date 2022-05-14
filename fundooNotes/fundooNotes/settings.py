@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/4.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.0/ref/settings/
 """
-
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -24,8 +24,8 @@ SECRET_KEY = 'django-insecure-)r$-o1^19^4xwm=6nzr+$#t=bz5hk#i#7!u(9*2-0jb_ltz3pk
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_HOST_USER = 'dhugkar95@gmail.com'
-EMAIL_HOST_PASSWORD = ""
+EMAIL_HOST_USER = os.environ.get('email')
+EMAIL_HOST_PASSWORD = os.environ.get('password')
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 # EMAIL_USE_SSL = True
@@ -48,7 +48,7 @@ INSTALLED_APPS = [
     'django_celery_results',
 
 ]
-
+JWT_EXPIRE_MINUTE = 60
 AUTH_USER_MODEL = "user.User"
 
 MIDDLEWARE = [
@@ -59,7 +59,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'fundooNotes.middleware.CustomMiddleware'
+    'fundooNotes.middleware.CustomMiddleware',
 ]
 
 ROOT_URLCONF = 'fundooNotes.urls'
@@ -143,16 +143,3 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-#
-
-
-#   CELERY SETTINGS
-CELERY_SETTINGS_URL = 'redis://127.0.0.1:6379'
-# CELERY_ACCEPT_CONTENT = ['APPLICATION/JSON']
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_TIMEZONE = 'Asia/Kolkata'
-CELERY_ACCEPT_CONTENT = ['json', 'application/text']
-CELERY_RESULT_BACKEND = 'redis'
-# CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
-CELERY_CACHE_BACKEND = 'default'

@@ -16,7 +16,7 @@ class UserSerializer(serializers.Serializer):
         """
         Create and return a new `User` instance, given the validated data.
         """
-        return User.objects.create(**validated_data)
+        return User.objects.create_user(**validated_data)
 
     def update(self, instance, validated_data):
         """

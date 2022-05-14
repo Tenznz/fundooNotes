@@ -6,9 +6,9 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Note
 from .serializers import NoteSerializer
-from django.http import JsonResponse
 from django.core.mail import send_mail
-from .utils import verify_token, RedisOperation
+from django.core.exceptions import ObjectDoesNotExist
+from .utils import verify_token
 
 logging.basicConfig(filename="views.log", filemode="w")
 
@@ -16,88 +16,84 @@ logging.basicConfig(filename="views.log", filemode="w")
 class Notes(APIView):
     @verify_token
     def post(self, request):
-        data = request.data
-        data["user_id"] = request.data.get("id")
-        # print(data)
-        serializer = NoteSerializer(data=data)
+        serializer = NoteSerializer(data=request.data)
         try:
             serializer.is_valid(raise_exception=True)
             serializer.save()
-            RedisOperation().add_note(request.data.get("id"), note=serializer.data)
             return Response(
                 {
                     "message": "Data store successfully",
                     "data": serializer.data
-                })
+                }, 201)
+        except ValidationError as e:
+            logging.error(e)
+            return Response({
+                'message': serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             logging.error(e)
-            return Response(serializer.errors)
+            return Response({
+                'message': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
     @verify_token
     def get(self, request):
-        user_id = request.data.get("id")
         try:
-            data = RedisOperation().get_note(user_id=user_id).values()
-            if data is not None:
-                return Response({
-                    "message": "user found",
-                    "data": data
-                })
-            else:
-                print("data from db")
-                note = Note.objects.filter(user_id_id=user_id)
-                serializer = NoteSerializer(note, many=True)
-                print(serializer.data)
-                return Response({
-                    "message": "user found",
-                    "data": serializer.data
-                })
+            note = Note.objects.filter(user_id_id=request.data.get("user_id"))
+            serializer = NoteSerializer(note, many=True)
+            return Response({
+                "message": "user found",
+                "data": serializer.data
+            }, status=status.HTTP_200_OK)
+        except ObjectDoesNotExist:
+            return Response({
+                "message": "note not found"
+            }, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({
-                "message": "user not found",
-            })
+                "message": str(e),
+            }, status=status.HTTP_400_BAD_REQUEST)
 
     @verify_token
-    def delete(self, request):
+    def delete(self, request, pk):
         try:
-            note = Note.objects.get(pk=request.data["note_id"])
-            print(note)
-            RedisOperation().delete_note(request.data.get("id"), request.data.get("note_id"))
-            note.delete()
+            Note.objects.get(pk=pk).delete()
             return Response({
-                "message": "user delete successfully"
-            })
+                "message": "note delete successfully"
+            }, status=status.HTTP_200_OK)
+
+        except ObjectDoesNotExist:
+            return Response({
+                "message": "note not found"
+            }, status=status.HTTP_400_BAD_REQUEST)
+
         except Exception as e:
             logging.error(e)
             print(e)
             return Response(
                 {
                     "message": "Data not deleted"
-                },
-                status=status.HTTP_400_BAD_REQUEST)
-
-    #
+                }, status=status.HTTP_400_BAD_REQUEST)
 
     @verify_token
     def put(self, request):
-        data = request.data
-        data["user_id"] = request.data.get("id")
-        note = Note.objects.get(pk=request.data["node_id"])
-        print(note)
-        serializer = NoteSerializer(note, data=data)
         try:
+            note = Note.objects.get(pk=request.data["note_id"])
+            serializer = NoteSerializer(note, data=request.data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
-            RedisOperation().update_note(serializer.data)
             return Response({
                 "message": "user update successfully",
                 "data": serializer.data
-            })
+            }, status=status.HTTP_200_OK)
+        except ObjectDoesNotExist:
+            return Response({
+                "message": "note not found"
+            }, status=status.HTTP_400_BAD_REQUEST)
+
         except Exception as e:
             logging.error(e)
-            print(e)
             return Response(
                 {
                     "message": "Data not updated"
-                },
-                status=status.HTTP_400_BAD_REQUEST)
+                }, status=status.HTTP_400_BAD_REQUEST)
