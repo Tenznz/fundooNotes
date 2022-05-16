@@ -10,7 +10,6 @@ logging.basicConfig(filename="views.log", filemode="w")
 
 def verify_token(function):
     def wrapper(self, request, note_id=None):
-        print(request.META)
         if 'HTTP_AUTHORIZATION' not in request.META:
             resp = Response({'message': 'Token not provided in the header'})
             resp.status_code = 401
@@ -18,7 +17,7 @@ def verify_token(function):
             return resp
         token = request.META['HTTP_AUTHORIZATION']
         id = EncodeDecodeToken.decode_token(token)
-        request.data.update({'id': id.get("id")})
+        request.data.update({'user_id': id.get("id")})
         if note_id is None:
             return function(self, request)
         else:
@@ -39,7 +38,15 @@ def get_note_format(note_data):
             "color": note.color,
             "archive": note.archive,
             "is_deleted": note.is_deleted,
+            'pin': note.pin,
             "label_list": LabelSerializer(note_labels, many=True).data
         })
 
     return note_list
+
+
+def search(note, search_data):
+    if note.title.lower().find(search_data) and note.description.lower().find(search_data) is -1:
+        return False
+    else:
+        return True

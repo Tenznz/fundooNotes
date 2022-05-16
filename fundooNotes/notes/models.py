@@ -11,6 +11,8 @@ class Note(models.Model):
     color = models.CharField(max_length=50, default="")
     archive = models.BooleanField(default=False, blank=True)
     is_deleted = models.BooleanField(default=False, blank=True)
+    pin = models.BooleanField(default=False, blank=True)
+    # collaborator = models.ManyToManyField(User, related_name='share_to')
 
     def get_format(self):
         return {
@@ -30,8 +32,13 @@ class Label(models.Model):
     def __str__(self):
         return self.name
 
-    def get_label(self):
-        return {
-            "name": self.name,
-            "color": self.color
-        }
+    # def get_label(self):
+    #     return {
+    #         "name": self.name,
+    #         "color": self.color
+    #     }
+
+
+class Collaborator(models.Model):
+    user = models.ForeignKey(User, on_delete=models.PROTECT)
+    note = models.ForeignKey(Note, on_delete=models.PROTECT)

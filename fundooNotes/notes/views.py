@@ -6,11 +6,10 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.http import JsonResponse
-from .models import Note, Label
-from .serializers import NoteSerializer
-from django.http import JsonResponse
+from .models import Note, Label, Collaborator
+from .serializers import NoteSerializer, LabelSerializer, CollaboratorSerializer
 from django.core.mail import send_mail
-from .utils import verify_token, get_note_format
+from .utils import verify_token, get_note_format, search
 from rest_framework.exceptions import ValidationError
 
 logging.basicConfig(filename="views.log", filemode="w")
@@ -26,9 +25,7 @@ class Notes(APIView):
         :param request: note details
         :return:response
         """
-        data = request.data
-        data["user_id"] = request.data.get("id")
-        serializer = NoteSerializer(data=data)
+        serializer = NoteSerializer(data=request.data)
         try:
             serializer.is_valid(raise_exception=True)
             serializer.save()
@@ -50,7 +47,7 @@ class Notes(APIView):
             logging.error(e)
             return Response(
                 {
-                    "message": "Data not stored"
+                    "message": str(e)
                 },
                 status=status.HTTP_400_BAD_REQUEST)
 
@@ -61,12 +58,18 @@ class Notes(APIView):
         :param request:
         :return:response
         """
-        user_id = request.data.get("id")
         try:
-            notes = Note.objects.filter(user_id=user_id).order_by("-id")
+            collaborators = Collaborator.objects.filter(user_id=request.data.get('user_id'))
+            note_id = list()
+            for colaborator in collaborators:
+                note_id.append(colaborator.note.id)
+            print(note_id)
+            notes = Note.objects.filter(pk__in=note_id)
+
+            print(notes)
             return Response({
                 "message": "user found",
-                "data": get_note_format(notes)
+                "data": NoteSerializer(notes, many=True).data
             }, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({
@@ -83,7 +86,6 @@ class Notes(APIView):
             """
         try:
             note = Note.objects.get(pk=note_id)
-            print(note)
             note.delete()
             return Response({
                 "message": "user delete successfully"
@@ -105,11 +107,8 @@ class Notes(APIView):
         :return:response 
         """
         try:
-            data = request.data
-            data["user_id"] = request.data.get("id")
             note = Note.objects.get(pk=request.data["note_id"])
-            print(note)
-            serializer = NoteSerializer(note, data=data)
+            serializer = NoteSerializer(note, data=request.data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(
@@ -155,15 +154,10 @@ class Labels(APIView):
 
     def get(self, request):
         try:
-            request_data = request.data
-            label_name = request_data.get("label_name")
-            label_data = Label.objects.get(name=label_name)
-            note_data = label_data.note.all()
-            note = Note.objects.filter(user_id=request_data["user_id"])
-            print(note.note.all())
+            label_data = Label.objects.all()
             return Response({
-                "label_name": label_name,
-                "notes list": [x.get_format() for x in note_data]
+                'message': 'labels retrieve successfully',
+                "notes list": LabelSerializer(label_data, many=True).data
             }, status=status.HTTP_200_OK)
         except Exception as e:
             logging.error(e)
@@ -173,8 +167,7 @@ class Labels(APIView):
 
     def delete(self, request):
         try:
-            request_data = request.data
-            label = Label.objects.get(name=request_data.get("label_name"))
+            label = Label.objects.get(name=request.data.get("label_name"))
             label.delete()
             return Response({
                 "message": "label delete successfully"
@@ -183,4 +176,60 @@ class Labels(APIView):
             logging.error(e)
             return Response({
                 "error_message": str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class SearchAPI(APIView):
+    def get(self, request, search_data):
+        try:
+            # search_data = request.data.get('search')
+            notes = Note.objects.all()
+            search_note_list = list()
+            for note in notes:
+                if search(note, search_data) is True:
+                    search_note_list.append({'title': note.title, 'description': note.description})
+            return Response({
+                "search": search_data,
+                "notes list": [i for i in search_note_list]
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            logging.error(e)
+            return Response({
+                "error_message": str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CollaboratorAPI(APIView):
+    def post(self, request):
+        try:
+            Collaborator.objects.create(user_id=request.data['user_id'], note_id=request.data['note_id'])
+            return Response({
+                "message": 'successfully',
+                "data": ''
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            logging.error(e)
+            return Response({
+                "error_message": str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+    @verify_token
+    def get(self, request):
+        """
+        get note of user
+        :param request:
+        :return:response
+        """
+        try:
+            col = Collaborator.objects.all()
+            serializer = CollaboratorSerializer(col, many=True)
+
+            return Response({
+                "message": "user found",
+                "data": serializer.data
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({
+                "message": str(e),
             }, status=status.HTTP_400_BAD_REQUEST)

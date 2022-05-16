@@ -1,13 +1,33 @@
 from rest_framework import serializers
-from notes.models import Note, Label
+from notes.models import Note, Label, Collaborator
+from user.serializers import UserSerializer
+from user.models import  User
+
+
+class LabelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Label
+        fields = ['id', 'name', 'color']
 
 
 class NoteSerializer(serializers.ModelSerializer):
     """ Serializer is used to converting the python object """
 
+    label = serializers.SerializerMethodField()
+
     class Meta:
         model = Note
-        fields = "__all__"
+        fields = ['id', 'title', 'description', 'color', 'label']
+        read_only_fields = ['label']  # post,put
+
+    def get_label(self, obj):
+        try:
+            note_labels = obj.label_set.all()
+            print(obj)
+            label = LabelSerializer(note_labels, many=True)
+            return label.data
+        except obj.DoesNotExist:
+            return []
 
     def create(self, validate_data):
         """
@@ -19,17 +39,24 @@ class NoteSerializer(serializers.ModelSerializer):
             title=validate_data.get("title"),
             description=validate_data.get("description"),
             user_id=validate_data.get("user_id"),
-            # created_at=validate_data.get("created_at"),
             color=validate_data.get("color"),
-            # archive=validate_data.get("archive"),
-            # is_deleted=validate_data.get("is_deleted")
         )
         print("notes")
         return notes
 
 
-class LabelSerializer(serializers.ModelSerializer):
+class CollaboratorSerializer(serializers.ModelSerializer):
+    notes = serializers.SerializerMethodField()
+    user = serializers.SerializerMethodField()
 
     class Meta:
-        model = Label
-        fields = ['id','name','color']
+        model = Collaborator
+        fields = ['id', 'notes', 'user']
+
+    def get_user(self, obj):
+        user = User.objects.get(id=obj.user.id)
+        return UserSerializer(user).data
+
+    def get_notes(self, obj):
+        notes = Note.objects.filter(id=obj.note.id)
+        return NoteSerializer(notes, many=True).data

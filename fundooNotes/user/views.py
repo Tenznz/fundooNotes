@@ -85,14 +85,14 @@ class UserRegistration(APIView):
         :param request:
         :return:response
         """
-        total=User.objects.all().count()
-        user = User.objects.all()[(total-10):total]
+        total = User.objects.all().count()
+        user = User.objects.all()[(total - 10):total]
         serializer = UserSerializer(user, many=True)
         return Response({
-                    "message": "data fetch successfully",
-                    "data": serializer.data
-                },
-                status=status.HTTP_200_OK)
+            "message": "data fetch successfully",
+            "data": serializer.data
+        },
+            status=status.HTTP_200_OK)
 
 
 class UserLogin(APIView):
@@ -125,7 +125,10 @@ class UserLogin(APIView):
                         "message": "login successfully", "token": token
                     },
                     status=status.HTTP_201_CREATED)
-
+            return Response(
+                {
+                    "message": "user not found"
+                }, status=status.HTTP_201_CREATED)
         except Exception as e:
             logging.error(e)
             return Response(
@@ -157,4 +160,4 @@ class ValidateToken(APIView):
                             status=status.HTTP_201_CREATED)
         except Exception as e:
             logging.error(e)
-            return HttpResponse(e,status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
