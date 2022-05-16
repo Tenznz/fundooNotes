@@ -1,15 +1,12 @@
 import logging
 import json
-from drf_yasg import openapi
-from drf_yasg.utils import swagger_auto_schema
+
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from django.http import JsonResponse
 from .models import Note, Label, Collaborator
 from .serializers import NoteSerializer, LabelSerializer, CollaboratorSerializer
-from django.core.mail import send_mail
-from .utils import verify_token, get_note_format, search
+from .utils import verify_token
 from rest_framework.exceptions import ValidationError
 
 logging.basicConfig(filename="views.log", filemode="w")
@@ -180,17 +177,16 @@ class Labels(APIView):
 
 
 class SearchAPI(APIView):
-    def get(self, request, search_data):
+    @verify_token
+    def get(self, request):
         try:
-            # search_data = request.data.get('search')
-            notes = Note.objects.all()
-            search_note_list = list()
-            for note in notes:
-                if search(note, search_data) is True:
-                    search_note_list.append({'title': note.title, 'description': note.description})
+            search_data = request.data.get('search')
+            notes = Note.objects.filter(title__contains=search_data).filter(user_id=request.data.get('user_id'))|\
+                    Note.objects.filter(description__contains=search_data).filter(user_id=request.data.get('user_id'))
+
             return Response({
-                "search": search_data,
-                "notes list": [i for i in search_note_list]
+                "message": "note_found",
+                "data": NoteSerializer(notes, many=True).data
             }, status=status.HTTP_200_OK)
 
         except Exception as e:

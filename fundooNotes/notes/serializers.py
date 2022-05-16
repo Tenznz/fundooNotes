@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from notes.models import Note, Label, Collaborator
 from user.serializers import UserSerializer
-from user.models import  User
+from user.models import User
 
 
 class LabelSerializer(serializers.ModelSerializer):
@@ -17,7 +17,7 @@ class NoteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Note
-        fields = ['id', 'title', 'description', 'color', 'label']
+        fields = ['id', 'title', 'description', 'user_id', 'label']
         read_only_fields = ['label']  # post,put
 
     def get_label(self, obj):
@@ -29,20 +29,20 @@ class NoteSerializer(serializers.ModelSerializer):
         except obj.DoesNotExist:
             return []
 
-    def create(self, validate_data):
-        """
-        for creating the user
-        :param validate_data: validating the api data
-        :return:notes
-        """
-        notes = Note.objects.create(
-            title=validate_data.get("title"),
-            description=validate_data.get("description"),
-            user_id=validate_data.get("user_id"),
-            color=validate_data.get("color"),
-        )
-        print("notes")
-        return notes
+    # def create(self, validate_data):
+    #     """
+    #     for creating the user
+    #     :param validate_data: validating the api data
+    #     :return:notes
+    #     """
+    #     notes = Note.objects.create(
+    #         title=validate_data.get("title"),
+    #         description=validate_data.get("description"),
+    #         user_id=validate_data.get("user_id"),
+    #         color=validate_data.get("color"),
+    #     )
+    #     print("notes")
+    #     return notes
 
 
 class CollaboratorSerializer(serializers.ModelSerializer):
