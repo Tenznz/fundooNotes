@@ -45,17 +45,10 @@ class UserRegistration(APIView):
         serializer = UserSerializer(data=request.data)
         try:
             serializer.is_valid(raise_exception=True)
-            user = User.objects.create_user(username=serializer.data['username'],
-                                            first_name=serializer.data['first_name'],
-                                            last_name=serializer.data['last_name'],
-                                            password=serializer.data['password'],
-                                            age=serializer.data['age'],
-                                            email=serializer.data['email'],
-                                            phone=serializer.data['phone'])
+            serializer.save()
 
-            token = EncodeDecodeToken.encode_token(payload=user.pk)
+            token = EncodeDecodeToken.encode_token(payload=serializer.data['id'])
             send_email_task(token, serializer.data.get("email"))
-            print(token)
             return Response(
                 {
                     "message": "data store successfully",
@@ -72,7 +65,7 @@ class UserRegistration(APIView):
             print(e)
             return Response(
                 {
-                    "message": "data storing failed"
+                    "message": str(e)
                 },
                 status=status.HTTP_400_BAD_REQUEST)
 
@@ -118,11 +111,11 @@ class UserLogin(APIView):
             password = request.data.get("password")
             user = auth.authenticate(username=username, password=password)
             if user is not None:
-                UserSerializer(user)
                 token = EncodeDecodeToken.encode_token(payload=user.pk)
                 return Response(
                     {
-                        "message": "login successfully", "token": token
+                        "message": "login successfully",
+                        "token": token
                     },
                     status=status.HTTP_201_CREATED)
             return Response(

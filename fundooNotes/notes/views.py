@@ -1,13 +1,16 @@
 import logging
-import json
 
+from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Q
 from rest_framework import status
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from .models import Note, Label, Collaborator
-from .serializers import NoteSerializer, LabelSerializer, CollaboratorSerializer
-from .utils import verify_token
 from rest_framework.exceptions import ValidationError
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from user.models import User
+from .models import Note, Label
+from .serializers import NoteSerializer, LabelSerializer
+from .utils import verify_token
 
 logging.basicConfig(filename="views.log", filemode="w")
 
@@ -28,18 +31,14 @@ class Notes(APIView):
             serializer.save()
             return Response(
                 {
-                    "message": "Data store successfully",
+                    "message": "note added successfully",
                     "data": serializer.data
                 }, status=status.HTTP_201_CREATED)
         except ValidationError as e:
             logging.error(e)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        except NameError as e:
-            logging.error(e)
             return Response({
-                "message": "nameError"
+                'message': serializer.errors
             }, status=status.HTTP_400_BAD_REQUEST)
-
         except Exception as e:
             logging.error(e)
             return Response(
@@ -56,16 +55,10 @@ class Notes(APIView):
         :return:response
         """
         try:
-            collaborators = Collaborator.objects.filter(user_id=request.data.get('user_id'))
-            note_id = list()
-            for colaborator in collaborators:
-                note_id.append(colaborator.note.id)
-            print(note_id)
-            notes = Note.objects.filter(pk__in=note_id)
-
-            print(notes)
+            user = User.objects.get(id=request.data['user_id'])
+            notes = user.collaborator.all() | Note.objects.filter(user_id=request.data['user_id'])
             return Response({
-                "message": "user found",
+                "message": "note found",
                 "data": NoteSerializer(notes, many=True).data
             }, status=status.HTTP_200_OK)
         except Exception as e:
@@ -85,11 +78,16 @@ class Notes(APIView):
             note = Note.objects.get(pk=note_id)
             note.delete()
             return Response({
-                "message": "user delete successfully"
+                "message": "note delete successfully"
             }, status=status.HTTP_204_NO_CONTENT)
+        except ObjectDoesNotExist:
+            return Response(
+                {
+                    "message": 'note not found'
+                },
+                status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             logging.error(e)
-            print("reach Exception")
             return Response(
                 {
                     "message": str(e)
@@ -115,6 +113,12 @@ class Notes(APIView):
                 },
                 status=status.HTTP_204_NO_CONTENT
             )
+        except ObjectDoesNotExist:
+            return Response(
+                {
+                    "message": 'note not found'
+                },
+                status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             logging.error(e)
             print(e)
@@ -181,14 +185,20 @@ class SearchAPI(APIView):
     def get(self, request):
         try:
             search_data = request.data.get('search')
-            notes = Note.objects.filter(title__contains=search_data).filter(user_id=request.data.get('user_id'))|\
-                    Note.objects.filter(description__contains=search_data).filter(user_id=request.data.get('user_id'))
-
+            notes = Note.objects.filter(Q(title__contains=search_data) |
+                                        Q(description__contains=search_data),
+                                        user_id=request.data['user_id'])
             return Response({
                 "message": "note_found",
                 "data": NoteSerializer(notes, many=True).data
             }, status=status.HTTP_200_OK)
 
+        except ObjectDoesNotExist:
+            return Response(
+                {
+                    "message": 'note not found'
+                },
+                status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             logging.error(e)
             return Response({
@@ -199,17 +209,27 @@ class SearchAPI(APIView):
 class CollaboratorAPI(APIView):
     def post(self, request):
         try:
-            Collaborator.objects.create(user_id=request.data['user_id'], note_id=request.data['note_id'])
+            # Note.objects.create(user_id=request.data['user_id'], note_id=request.data['note_id'])
+            note = Note.objects.get(id=request.data['note_id'])
+            user = User.objects.get(id=request.data['user_id'])
+            user.collaborator.add(note)
             return Response({
                 "message": 'successfully',
                 "data": ''
             }, status=status.HTTP_200_OK)
+        except ObjectDoesNotExist:
+            return Response(
+                {
+                    "message": 'note not found'
+                },
+                status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             logging.error(e)
             return Response({
                 "error_message": str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
 
+    #
     @verify_token
     def get(self, request):
         """
@@ -218,12 +238,12 @@ class CollaboratorAPI(APIView):
         :return:response
         """
         try:
-            col = Collaborator.objects.all()
-            serializer = CollaboratorSerializer(col, many=True)
-
+            user = User.objects.get(id=request.data['user_id'])
+            note = user.collaborator.all() | Note.objects.filter(user_id=request.data['user_id'])
+            print([i for i in note])
             return Response({
                 "message": "user found",
-                "data": serializer.data
+                "data": NoteSerializer(note, many=True).data
             }, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({

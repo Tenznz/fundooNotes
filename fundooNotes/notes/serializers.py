@@ -1,7 +1,5 @@
 from rest_framework import serializers
-from notes.models import Note, Label, Collaborator
-from user.serializers import UserSerializer
-from user.models import User
+from notes.models import Note, Label
 
 
 class LabelSerializer(serializers.ModelSerializer):
@@ -45,18 +43,18 @@ class NoteSerializer(serializers.ModelSerializer):
     #     return notes
 
 
-class CollaboratorSerializer(serializers.ModelSerializer):
-    notes = serializers.SerializerMethodField()
-    user = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Collaborator
-        fields = ['id', 'notes', 'user']
-
-    def get_user(self, obj):
-        user = User.objects.get(id=obj.user.id)
-        return UserSerializer(user).data
-
-    def get_notes(self, obj):
-        notes = Note.objects.filter(id=obj.note.id)
-        return NoteSerializer(notes, many=True).data
+# class CollaboratorSerializer(serializers.ModelSerializer):
+#     notes = serializers.SerializerMethodField()
+#     user = serializers.SerializerMethodField()
+#
+#     class Meta:
+#         model = Collaborator
+#         fields = ['id', 'notes', 'user']
+#
+#     def get_user(self, obj):
+#         user = User.objects.get(id=obj.user.id)
+#         return UserSerializer(user).data
+#
+#     def get_notes(self, obj):
+#         notes = Note.objects.filter(id=obj.note.id)
+#         return NoteSerializer(notes, many=True).data
