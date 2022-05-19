@@ -1,11 +1,8 @@
-import json
 import logging
-import jwt
 
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.exceptions import ValidationError
-from django.http import HttpResponse
 from django.contrib.auth.models import auth
 from rest_framework.response import Response
 from user.models import User
@@ -13,8 +10,7 @@ from user.serializers import UserSerializer
 from rest_framework.views import APIView
 from .utils import EncodeDecodeToken
 from rest_framework import status
-from user.task import send_email_task
-from user.email import Email
+from .producer import send_token
 
 logging.basicConfig(filename="views.log", filemode="w")
 
@@ -48,7 +44,7 @@ class UserRegistration(APIView):
             serializer.save()
 
             token = EncodeDecodeToken.encode_token(payload=serializer.data['id'])
-            send_email_task(token, serializer.data.get("email"))
+            send_token(token, serializer.data['email'])
             return Response(
                 {
                     "message": "data store successfully",
@@ -62,7 +58,6 @@ class UserRegistration(APIView):
 
         except Exception as e:
             logging.error(e)
-            print(e)
             return Response(
                 {
                     "message": str(e)

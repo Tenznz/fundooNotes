@@ -26,7 +26,3 @@ class Label(models.Model):
     def __str__(self):
         return self.name
 
-#
-# class Collaborator(models.Model):
-#     user = models.ForeignKey(User, on_delete=models.PROTECT)
-#     note = models.ForeignKey(Note, on_delete=models.PROTECT)

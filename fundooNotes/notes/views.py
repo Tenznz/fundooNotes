@@ -55,8 +55,8 @@ class Notes(APIView):
         :return:response
         """
         try:
-            user = User.objects.get(id=request.data['user_id'])
-            notes = user.collaborator.all() | Note.objects.filter(user_id=request.data['user_id'])
+            notes = Note.objects.filter(
+                Q(user_id=request.data['user_id']) | Q(collaborator__id=request.data['user_id']))
             return Response({
                 "message": "note found",
                 "data": NoteSerializer(notes, many=True).data
@@ -69,11 +69,11 @@ class Notes(APIView):
     @verify_token
     def delete(self, request, note_id):
         """
-            delete note of user
-            :param note_id: note_id
-            :param request:
-            :return:response
-            """
+        delete note of user
+        :param note_id: note_id
+        :param request:
+        :return:response
+        """
         try:
             note = Note.objects.get(pk=note_id)
             note.delete()
@@ -121,7 +121,6 @@ class Notes(APIView):
                 status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             logging.error(e)
-            print(e)
             return Response(
                 {
                     "error_message": str(e)
@@ -133,6 +132,9 @@ class Labels(APIView):
     """label to the notes"""
 
     def post(self, request):
+        """
+        add a label to note if label is not exist it will create new
+        """
         try:
             request_data = request.data
             note_id = request_data.get('note_id')
@@ -142,7 +144,6 @@ class Labels(APIView):
             else:
                 label = Label(name=request.data.get('label_name'), color=request.data.get('color'))
                 label.save()
-                print(label)
             label.note.add(note_id)
             return Response({
                 "message": "label added successfully"
@@ -154,6 +155,9 @@ class Labels(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
     def get(self, request):
+        """
+        fetch all the labels in table
+        """
         try:
             label_data = Label.objects.all()
             return Response({
@@ -166,23 +170,27 @@ class Labels(APIView):
                 "error_message": str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
 
-    def delete(self, request):
-        try:
-            label = Label.objects.get(name=request.data.get("label_name"))
-            label.delete()
-            return Response({
-                "message": "label delete successfully"
-            }, status=status.HTTP_204_NO_CONTENT)
-        except Exception as e:
-            logging.error(e)
-            return Response({
-                "error_message": str(e)
-            }, status=status.HTTP_400_BAD_REQUEST)
+    # def delete(self, request):
+    #     try:
+    #         label = Label.objects.get(name=request.data.get("label_name"))
+    #         label.delete()
+    #         return Response({
+    #             "message": "label delete successfully"
+    #         }, status=status.HTTP_204_NO_CONTENT)
+    #     except Exception as e:
+    #         logging.error(e)
+    #         return Response({
+    #             "error_message": str(e)
+    #         }, status=status.HTTP_400_BAD_REQUEST)
 
 
 class SearchAPI(APIView):
     @verify_token
     def get(self, request):
+        """
+
+        """
+
         try:
             search_data = request.data.get('search')
             notes = Note.objects.filter(Q(title__contains=search_data) |
@@ -207,12 +215,16 @@ class SearchAPI(APIView):
 
 
 class CollaboratorAPI(APIView):
+    """collaborating notes wiih user"""
+    @verify_token
     def post(self, request):
+        """
+        collaborating user to notes many to many
+        """
         try:
-            # Note.objects.create(user_id=request.data['user_id'], note_id=request.data['note_id'])
-            note = Note.objects.get(id=request.data['note_id'])
-            user = User.objects.get(id=request.data['user_id'])
-            user.collaborator.add(note)
+            note = Note.objects.get(id=request.data['note_id'], user_id=request.data['user_id'])
+            user = User.objects.get(id=request.data['collaborator_id'])
+            note.collaborator.add(user)
             return Response({
                 "message": 'successfully',
                 "data": ''
@@ -227,25 +239,4 @@ class CollaboratorAPI(APIView):
             logging.error(e)
             return Response({
                 "error_message": str(e)
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-    #
-    @verify_token
-    def get(self, request):
-        """
-        get note of user
-        :param request:
-        :return:response
-        """
-        try:
-            user = User.objects.get(id=request.data['user_id'])
-            note = user.collaborator.all() | Note.objects.filter(user_id=request.data['user_id'])
-            print([i for i in note])
-            return Response({
-                "message": "user found",
-                "data": NoteSerializer(note, many=True).data
-            }, status=status.HTTP_200_OK)
-        except Exception as e:
-            return Response({
-                "message": str(e),
             }, status=status.HTTP_400_BAD_REQUEST)
