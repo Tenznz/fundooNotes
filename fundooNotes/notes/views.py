@@ -138,12 +138,8 @@ class Labels(APIView):
         try:
             request_data = request.data
             note_id = request_data.get('note_id')
-            label = Label.objects.filter(name=request.data.get('label_name'))
-            if len(label) == 1:
-                label = Label.objects.get(name=request.data.get('label_name'))
-            else:
-                label = Label(name=request.data.get('label_name'), color=request.data.get('color'))
-                label.save()
+            label = Label(name=request.data.get('label_name'), color=request.data.get('color'))
+            label.save()
             label.note.add(note_id)
             return Response({
                 "message": "label added successfully"
@@ -169,19 +165,6 @@ class Labels(APIView):
             return Response({
                 "error_message": str(e)
             }, status=status.HTTP_400_BAD_REQUEST)
-
-    # def delete(self, request):
-    #     try:
-    #         label = Label.objects.get(name=request.data.get("label_name"))
-    #         label.delete()
-    #         return Response({
-    #             "message": "label delete successfully"
-    #         }, status=status.HTTP_204_NO_CONTENT)
-    #     except Exception as e:
-    #         logging.error(e)
-    #         return Response({
-    #             "error_message": str(e)
-    #         }, status=status.HTTP_400_BAD_REQUEST)
 
 
 class SearchAPI(APIView):
@@ -226,8 +209,7 @@ class CollaboratorAPI(APIView):
             user = User.objects.get(id=request.data['collaborator_id'])
             note.collaborator.add(user)
             return Response({
-                "message": 'successfully',
-                "data": ''
+                "message": 'collaborate successfully',
             }, status=status.HTTP_200_OK)
         except ObjectDoesNotExist:
             return Response(

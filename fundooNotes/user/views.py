@@ -10,7 +10,7 @@ from user.serializers import UserSerializer
 from rest_framework.views import APIView
 from .utils import EncodeDecodeToken
 from rest_framework import status
-from .producer import send_token
+from .producer import RabbitServer
 
 logging.basicConfig(filename="views.log", filemode="w")
 
@@ -44,7 +44,9 @@ class UserRegistration(APIView):
             serializer.save()
 
             token = EncodeDecodeToken.encode_token(payload=serializer.data['id'])
-            send_token(token, serializer.data['email'])
+            RabbitServer().send_token('user_signup', token, serializer.data)
+            RabbitServer().close()
+
             return Response(
                 {
                     "message": "data store successfully",

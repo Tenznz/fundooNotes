@@ -1,20 +1,24 @@
 import json
-
 import pika
 
 
-def send_token(token,email):
-    # connection to rabbitmq server
-    connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
-    channel = connection.channel()
+class RabbitServer:
+    def __init__(self):
+        self.connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
 
-    # check for queue in consumer exist
-    channel.queue_declare(queue='user_token')
+    def sign_up_message(self, *args):
+        """
+        args:queue,token,user_data
+        """
+        channel = self.connection.channel()
+        channel.queue_declare(queue=args[0])
+        channel.basic_publish(exchange='',
+                              routing_key='user_token',
+                              body=json.dumps({'user': args[2], 'token': args[1]}))
+        print(f" [x] Sent {args[1]}'")
 
-    #
-    channel.basic_publish(exchange='',
-                          routing_key='user_token',
-                          body=json.dumps({'email':email,'token':token}))
-    print(f" [x] Sent {token}'")
-
-    connection.close()
+    def close(self):
+        """
+        close the connection
+        """
+        self.connection.close()

@@ -1,5 +1,5 @@
 import logging
-import json
+
 from rest_framework.response import Response
 from user.utils import EncodeDecodeToken
 
