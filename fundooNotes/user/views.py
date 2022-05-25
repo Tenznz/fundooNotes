@@ -44,8 +44,7 @@ class UserRegistration(APIView):
             serializer.save()
 
             token = EncodeDecodeToken.encode_token(payload=serializer.data['id'])
-            RabbitServer().send_token('user_signup', token, serializer.data)
-            RabbitServer().close()
+            RabbitServer().sign_up_message('user_signup', token, serializer.data)
 
             return Response(
                 {

@@ -13,12 +13,9 @@ class RabbitServer:
         channel = self.connection.channel()
         channel.queue_declare(queue=args[0])
         channel.basic_publish(exchange='',
-                              routing_key='user_token',
+                              routing_key=args[0],
                               body=json.dumps({'user': args[2], 'token': args[1]}))
         print(f" [x] Sent {args[1]}'")
 
-    def close(self):
-        """
-        close the connection
-        """
+    def __del__(self):
         self.connection.close()
