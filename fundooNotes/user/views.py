@@ -1,21 +1,12 @@
-import json
 import logging
-import jwt
 
 from django.shortcuts import render
-from drf_yasg import openapi
 from rest_framework.exceptions import ValidationError
-from django.http import HttpResponse
 from django.contrib.auth.models import auth
-from rest_framework.response import Response
 from user.models import User
 from user.serializers import UserSerializer
 from rest_framework.views import APIView
 from .utils import EncodeDecodeToken
-from rest_framework import status
-from user.task import send_email_task
-from user.email import Email
-from django.views.decorators.csrf import csrf_exempt
 
 logging.basicConfig(filename="views.log", filemode="w")
 
@@ -36,15 +27,9 @@ class UserRegistration(APIView):
         serializer = UserSerializer(data=request.data)
         try:
             serializer.is_valid(raise_exception=True)
-            user = User.objects.create_user(username=serializer.data['username'],
-                                            first_name=serializer.data['first_name'],
-                                            last_name=serializer.data['last_name'],
-                                            password=serializer.data['password'],
-                                            age=serializer.data['age'],
-                                            email=serializer.data['email'],
-                                            phone=serializer.data['phone'])
-
-            token = EncodeDecodeToken.encode_token(payload=user.pk)
+            serializer.save()
+            print(serializer.data)
+            token = EncodeDecodeToken.encode_token(payload=serializer.data['id'])
             print(token)
             return render(request, 'login.html')
         except ValidationError as e:
@@ -55,7 +40,7 @@ class UserRegistration(APIView):
         except Exception as e:
             logging.error(e)
             print(e)
-        return render(request, 'error.html', {'result': 'user not able to register'})
+            return render(request, 'error.html', {'result': str(e)})
 
     def get(self, request):
         """
@@ -71,7 +56,6 @@ class UserRegistration(APIView):
 class UserLogin(APIView):
     """ class based views for user login """
 
-    # @csrf_exempt
     def post(self, request):
         """
         this method is use for user login
@@ -79,10 +63,7 @@ class UserLogin(APIView):
         :return:response
         """
 
-        serializer = None
         try:
-            # print(request.POST['username'])
-            # print(request.data.get('password'))
             username = request.data.get("username")
             password = request.data.get("password")
             user = auth.authenticate(username=username, password=password)
@@ -95,4 +76,4 @@ class UserLogin(APIView):
 
         except Exception as e:
             logging.error(e)
-            return render(request, 'error.html', {'result': "username or password incorrect..!!"})
+            return render(request, 'error.html', {'result': str(e)})

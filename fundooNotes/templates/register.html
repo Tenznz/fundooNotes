@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+ <div class="form-content">
+    <form class="form" action="register" method="post">
+        <div class="form-head">User Registration Form</div>
+        <label  class="label text">Username</label>: <input class="input" type="text" name="username" placeholder="username"><br>
+        <label class="label text">First Name</label>: <input class="input" type="text" name="first_name"><br>
+        <label class="label text">Last Name</label>: <input class="input" type="text" name="last_name"><br>
+        <label class="label text">Email</label>: <input class="input" type="text" name="email"><br>
+        <label class="label text">Password</label>: <input class="input" type="password" name="password"><br>
+        <label class="label text">age</label>: <input class="input" type="text" name="age"><br>
+        <label class="label text">phone</label>: <input class="input" type="text" name="phone"><br>
+        <label class="label text">is verified</label>: <input class="input" type="text" name="is_verified"><br>
+        <button class="text" type="submit">Sign up</button><br>
+
+    </form>
+
+ </div>
+ <div>
+        <form class="form1" action="register" method="get">
+            <button class="text" type="submit">Display User</button><br>
+<!--            <a href="../templates/login.html">Sign Up</a>-->
+        </form>
+
+ </div>
+
+{% endblock %}

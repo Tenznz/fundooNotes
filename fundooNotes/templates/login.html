@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<H1>LOGIN</H1>
+<form action="login" method="post">
+    <label class="text label">Username</label>: <input type="text" name="username"><br>
+    <label class="text label">Password</label>: <input type="password" name="password"><br>
+    <input type="submit">
+    Not a register user? <a href="http://127.0.0.1:8000/user/">Sign Up</a>
+
+</form>
+
+{% endblock %}
