@@ -1,15 +1,9 @@
 import logging
-import json
-from drf_yasg import openapi
-from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from django.http import JsonResponse
 from .models import Note, Label
 from .serializers import NoteSerializer
-from django.http import JsonResponse
-from django.core.mail import send_mail
 from .utils import verify_token, get_note_format
 from rest_framework.exceptions import ValidationError
 

@@ -1,9 +1,7 @@
 import logging
-import json
 from rest_framework.response import Response
 from user.utils import EncodeDecodeToken
-from .redis import RedisCode
-from .serializers import NoteSerializer, LabelSerializer
+from .serializers import LabelSerializer
 
 logging.basicConfig(filename="views.log", filemode="w")
 

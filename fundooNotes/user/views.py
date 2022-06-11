@@ -45,15 +45,8 @@ class UserRegistration(APIView):
         serializer = UserSerializer(data=request.data)
         try:
             serializer.is_valid(raise_exception=True)
-            user = User.objects.create_user(username=serializer.data['username'],
-                                            first_name=serializer.data['first_name'],
-                                            last_name=serializer.data['last_name'],
-                                            password=serializer.data['password'],
-                                            age=serializer.data['age'],
-                                            email=serializer.data['email'],
-                                            phone=serializer.data['phone'])
-
-            token = EncodeDecodeToken.encode_token(payload=user.pk)
+            serializer.save()
+            token = EncodeDecodeToken.encode_token(payload=serializer.data.get('id'))
             send_email_task(token, serializer.data.get("email"))
             print(token)
             return Response(
@@ -63,16 +56,17 @@ class UserRegistration(APIView):
                 },
                 status=status.HTTP_201_CREATED)
 
-        except ValidationError as e:
-            logging.error(e)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+        except ValidationError:
+            return Response(
+                {
+                    "message": serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             logging.error(e)
             print(e)
             return Response(
                 {
-                    "message": "data storing failed"
+                    "message": str(e)
                 },
                 status=status.HTTP_400_BAD_REQUEST)
 
@@ -85,14 +79,14 @@ class UserRegistration(APIView):
         :param request:
         :return:response
         """
-        total=User.objects.all().count()
-        user = User.objects.all()[(total-10):total]
+        total = User.objects.all().count()
+        user = User.objects.all()[(total - 10):total]
         serializer = UserSerializer(user, many=True)
         return Response({
-                    "message": "data fetch successfully",
-                    "data": serializer.data
-                },
-                status=status.HTTP_200_OK)
+            "message": "data fetch successfully",
+            "data": serializer.data
+        },
+            status=status.HTTP_200_OK)
 
 
 class UserLogin(APIView):
@@ -157,4 +151,4 @@ class ValidateToken(APIView):
                             status=status.HTTP_201_CREATED)
         except Exception as e:
             logging.error(e)
-            return HttpResponse(e,status=status.HTTP_400_BAD_REQUEST)
+            return HttpResponse(e, status=status.HTTP_400_BAD_REQUEST)
