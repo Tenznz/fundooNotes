@@ -21,7 +21,6 @@ class NoteSerializer(serializers.ModelSerializer):
     def get_label(self, obj):
         try:
             note_labels = obj.label_set.all()
-            print(obj)
             label = LabelSerializer(note_labels, many=True)
             return label.data
         except obj.DoesNotExist:

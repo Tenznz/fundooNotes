@@ -1,6 +1,7 @@
 import logging
 
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import connection
 from django.db.models import Q
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
@@ -10,9 +11,11 @@ from rest_framework.views import APIView
 from user.models import User
 from .models import Note, Label
 from .serializers import NoteSerializer, LabelSerializer
-from .utils import verify_token
+from .utils import verify_token, get_list
 
 logging.basicConfig(filename="views.log", filemode="w")
+
+cursor = connection.cursor()
 
 
 class Notes(APIView):
@@ -54,12 +57,26 @@ class Notes(APIView):
         :param request:
         :return:response
         """
+        # # print(dir(cursor))
+        # cursor.execute('SELECT * FROM notes_note AS note JOIN user_user ON note.id = user_user.id WHERE user_user.id '
+        #                '= %s', [request.data['user_id']])
+
+
+        # for i in rows:
+        #     print(i[2])
         try:
-            user = User.objects.get(id=request.data['user_id'])
-            notes = user.collaborator.all() | Note.objects.filter(user_id=request.data['user_id'])
+            # user = User.objects.get(id=request.data['user_id'])
+            # notes = user.collaborator.all() | Note.objects.filter(user_id=request.data['user_id'])
+            cursor.execute('SELECT note.id,note.title,note.description,note.created_at,note.color,note.archive,'
+                           'note.is_deleted,note.user_id_id,note.pin as note_id FROM notes_note AS note LEFT JOIN '
+                           'notes_note_collaborator AS cola ON note.id=cola.note_id WHERE note.user_id_id=%s or '
+                           'cola.user_id=%s;', [request.data['user_id'], request.data['user_id']])
+
+            rows = cursor.fetchall()
+
             return Response({
                 "message": "note found",
-                "data": NoteSerializer(notes, many=True).data
+                "data": get_list(rows)
             }, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({
@@ -209,9 +226,8 @@ class SearchAPI(APIView):
 class CollaboratorAPI(APIView):
     def post(self, request):
         try:
-            # Note.objects.create(user_id=request.data['user_id'], note_id=request.data['note_id'])
-            note = Note.objects.get(id=request.data['note_id'])
-            user = User.objects.get(id=request.data['user_id'])
+            note = Note.objects.get(id=request.data['note_id'], user_id=request.data['user_id'])
+            user = User.objects.get(id=request.data['collaborator_id'])
             user.collaborator.add(note)
             return Response({
                 "message": 'successfully',
