@@ -12,9 +12,9 @@ def verify_token(function):
     def wrapper(self, request):
         # print(request.META)
         if 'HTTP_AUTHORIZATION' not in request.META:
-            resp = JsonResponse({'message': 'Token not provided in the header'})
+            resp = Response({'message': 'Token not provided in the header'})
             resp.status_code = 400
-            logger.info('Token not provided in the header')
+            logging.info('Token not provided in the header')
             return resp
         token = request.META['HTTP_AUTHORIZATION']
         encode = token.split(" ")
@@ -75,7 +75,6 @@ class RedisOperation:
                 new_note = {int(note.get('id')): note}
                 added_note = {**existing_note, **new_note}
                 self.redis_obj.set(user_id, json.dumps(added_note))
-            logging.error(e)
         except Exception as e:
             logging.error(e)
 

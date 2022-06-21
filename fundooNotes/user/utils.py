@@ -9,8 +9,7 @@ class EncodeDecodeToken:
                                  "secret",
                                  algorithm="HS256"
                                  )
-        encoded_token = jwt_encoded.decode('UTF-8')
-        return encoded_token
+        return jwt_encoded
 
     @staticmethod
     def decode_token(token):
@@ -19,6 +18,4 @@ class EncodeDecodeToken:
             "secret",
             algorithms=["HS256"]
         )
-
-        # print(decoded_token)
         return decoded_token

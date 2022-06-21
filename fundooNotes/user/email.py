@@ -6,6 +6,6 @@ class Email:
     @staticmethod
     def send_email(token, email_id):
         url = "http://127.0.0.1:8000/user/validate/" + token
-        print(url)
+        msg = f'click on link to verify user. \n{url}'
         # send_mail(subject, message, from_email, [to_email], fail_silently=False)
-        send_mail("register", url, email_id, ["dhugkar95@gmail.com"], fail_silently=False)
+        send_mail("welcome to fundoonote", msg, "Tenznz01@gmail.com", [email_id], fail_silently=False)

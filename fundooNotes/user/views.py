@@ -1,19 +1,14 @@
-import json
 import logging
-import jwt
 
 from rest_framework.exceptions import ValidationError
-from django.http import HttpResponse
 from django.contrib.auth.models import auth
-from django.http import JsonResponse
 from rest_framework.response import Response
 from user.models import User
 from user.serializers import UserSerializer
 from rest_framework.views import APIView
 from .utils import EncodeDecodeToken
 from rest_framework import status
-from user.task import send_email_task
-from user.email import Email
+from user.tasks import send_email_task
 
 logging.basicConfig(filename="views.log", filemode="w")
 
@@ -30,13 +25,13 @@ class UserRegistration(APIView):
             return Response({
                 "message": "data store successfully",
                 "data": serializer.data
-            }, 201)
+            }, status=status.HTTP_201_CREATED)
 
         except ValidationError as e:
             logging.error(e)
             return Response({
                 'message': serializer.errors
-            }, 400)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         except Exception as e:
             logging.error(e)
@@ -47,11 +42,6 @@ class UserRegistration(APIView):
                 },
                 status=status.HTTP_400_BAD_REQUEST)
 
-    def get(self, request):
-        user = User.objects.all()
-        serializer = UserSerializer(user, many=True)
-        return Response({data:serializer.data}, 200)
-
 
 class UserLogin(APIView):
 
@@ -60,7 +50,6 @@ class UserLogin(APIView):
             username = request.data.get("username")
             password = request.data.get("password")
             user = auth.authenticate(username=username, password=password)
-            print(user)
             if user is not None:
                 UserSerializer(user)
                 token = EncodeDecodeToken.encode_token(payload=user.pk)
@@ -68,13 +57,15 @@ class UserLogin(APIView):
                 return Response({
                     "message": "login successfully",
                     "data": token
-                }, 200)
+                }, status=status.HTTP_200_OK)
             return Response({
                 "message": "user login unsuccessful"
-            }, 400)
+            }, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             logging.error(e)
-            return JsonResponse({"message": "login unsuccessful"})
+            return Response({
+                "message": "login unsuccessful"
+            }, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ValidateToken(APIView):
